@@ -4,21 +4,18 @@ import { comparePassword, createSessionToken } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
-    const { username, email, password } = await req.json();
+    const { username, password } = await req.json();
 
-    const identifier = (username || email || '').trim();
+    const cleanUsername = (username || '').trim();
 
-    if (!identifier || !password) {
-      return NextResponse.json({ error: 'Username/Email and Password are required' }, { status: 400 });
+    if (!cleanUsername || !password) {
+      return NextResponse.json({ error: 'Username and password are required' }, { status: 400 });
     }
 
-    // Find user by either username or email
+    // Find user strictly by username (email login disabled per policy)
     const user = await prisma.user.findFirst({
       where: {
-        OR: [
-          { username: { equals: identifier, mode: 'insensitive' } },
-          { email: { equals: identifier, mode: 'insensitive' } },
-        ],
+        username: { equals: cleanUsername, mode: 'insensitive' },
       },
     });
 
