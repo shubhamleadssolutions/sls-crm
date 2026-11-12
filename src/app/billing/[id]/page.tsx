@@ -148,7 +148,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
         {/* ========================================================================= */}
         {/* CATALYSTK-INSPIRED COMMERCIAL INVOICE DOCUMENT                            */}
         {/* ========================================================================= */}
-        <div className="bg-white border-2 border-slate-300 shadow-xl p-8 sm:p-10 space-y-6 print:border print:border-slate-400 print:shadow-none print:p-6 text-slate-900 font-sans">
+        <div className="bg-white border-2 border-slate-300 shadow-xl p-4 sm:p-8 lg:p-10 space-y-6 print:border print:border-slate-400 print:shadow-none print:p-6 text-slate-900 font-sans">
           
           {/* Top Section: Header & Metadata */}
           <div className="flex flex-col sm:flex-row justify-between items-start gap-6 border-b-2 border-slate-800 pb-6">
@@ -259,8 +259,8 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
           </div>
 
           {/* Itemized Grid Table (Catalystk Grid Table) */}
-          <div className="border border-slate-300 rounded-lg overflow-hidden">
-            <table className="w-full text-left border-collapse text-xs">
+          <div className="border border-slate-300 rounded-lg overflow-x-auto">
+            <table className="w-full min-w-[520px] text-left border-collapse text-xs">
               <thead className="bg-slate-800 text-white uppercase text-[10px] font-bold tracking-wider">
                 <tr className="divide-x divide-slate-700">
                   <th className="py-3 px-3 w-12 text-center">S.No.</th>

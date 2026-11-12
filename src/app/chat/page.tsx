@@ -20,6 +20,7 @@ import {
   MoreVertical,
   Radio,
   Lock,
+  ArrowLeft,
 } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 
@@ -58,6 +59,7 @@ export default function TeamChatPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [activeChannelId, setActiveChannelId] = useState('general');
   const [activeDmUser, setActiveDmUser] = useState<TeamMember | null>(null);
+  const [mobileView, setMobileView] = useState<'sidebar' | 'chat'>('sidebar');
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -163,7 +165,7 @@ export default function TeamChatPage() {
         {/* ========================================================================= */}
         {/* LEFT SIDEBAR: CHANNELS & DIRECT MESSAGES                                  */}
         {/* ========================================================================= */}
-        <div className="w-full sm:w-72 bg-slate-50/80 border-r border-slate-200 flex flex-col shrink-0">
+        <div className={`w-full sm:w-72 bg-slate-50/80 border-r border-slate-200 flex-col shrink-0 ${mobileView === 'chat' ? 'hidden sm:flex' : 'flex'}`}>
           {/* Header */}
           <div className="p-4 border-b border-slate-200">
             <div className="flex items-center justify-between">
@@ -215,6 +217,7 @@ export default function TeamChatPage() {
                         onClick={() => {
                           setActiveDmUser(null);
                           setActiveChannelId(chan.id);
+                          setMobileView('chat');
                         }}
                         className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left transition font-semibold cursor-pointer ${
                           isActive
@@ -256,7 +259,10 @@ export default function TeamChatPage() {
                     return (
                       <button
                         key={member.id}
-                        onClick={() => setActiveDmUser(member)}
+                        onClick={() => {
+                          setActiveDmUser(member);
+                          setMobileView('chat');
+                        }}
                         className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left transition font-semibold cursor-pointer ${
                           isActive
                             ? 'bg-blue-600 text-white shadow-xs font-bold'
@@ -303,11 +309,20 @@ export default function TeamChatPage() {
         {/* ========================================================================= */}
         {/* RIGHT AREA: ACTIVE CONVERSATION & MESSAGES FEED                           */}
         {/* ========================================================================= */}
-        <div className="flex-1 flex flex-col bg-white overflow-hidden">
+        <div className={`flex-1 flex-col bg-white overflow-hidden ${mobileView === 'sidebar' ? 'hidden sm:flex' : 'flex'}`}>
           
           {/* Conversation Header */}
           <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/40">
             <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setMobileView('sidebar')}
+                className="sm:hidden p-1.5 -ml-1 mr-1 rounded-xl bg-slate-100 text-slate-600 hover:text-slate-900 transition flex items-center gap-1 cursor-pointer font-bold text-xs"
+                title="Back to Channels"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Channels</span>
+              </button>
               {activeDmUser ? (
                 <>
                   <div className="relative">

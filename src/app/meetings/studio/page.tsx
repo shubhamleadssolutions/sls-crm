@@ -737,7 +737,7 @@ function StudioRoom() {
         {/* RIGHT DRAWER: ATTENDEES / IN-MEETING CHAT / LIVE MEETING NOTES            */}
         {/* ========================================================================= */}
         {activeDrawer && (
-          <aside className="w-80 sm:w-96 rounded-3xl bg-[#161a20] border border-white/10 p-4 flex flex-col justify-between shadow-2xl shrink-0">
+          <aside className="absolute inset-0 sm:relative sm:inset-auto w-full sm:w-96 rounded-3xl bg-[#161a20] border border-white/10 p-4 flex flex-col justify-between shadow-2xl z-30 sm:z-auto shrink-0">
             {/* Drawer Header */}
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h4 className="font-bold text-sm text-white capitalize flex items-center gap-2">
@@ -865,30 +865,30 @@ function StudioRoom() {
       {/* ========================================================================= */}
       {/* BOTTOM CONTROL TOOLBAR (Clean, Sleek SLS-Branded Interface)               */}
       {/* ========================================================================= */}
-      <footer className="h-20 bg-[#161a20] border-t border-white/5 px-4 sm:px-8 flex items-center justify-between z-20">
+      <footer className="h-20 bg-[#161a20] border-t border-white/5 px-2 sm:px-8 flex items-center justify-between z-20">
         
         {/* Left: Audio & Video Controls */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           {/* Mic */}
           <button
             onClick={() => setMicOn(!micOn)}
-            className={`flex flex-col items-center gap-1 p-2 rounded-2xl w-16 sm:w-20 transition cursor-pointer ${
+            className={`flex flex-col items-center gap-1 p-1.5 sm:p-2 rounded-2xl w-12 sm:w-20 transition cursor-pointer ${
               micOn ? 'hover:bg-white/10 text-slate-200' : 'bg-rose-600/20 text-rose-400 hover:bg-rose-600/30'
             }`}
           >
-            {micOn ? <Mic className="w-5 h-5 text-emerald-400" /> : <MicOff className="w-5 h-5" />}
-            <span className="text-[10px] font-bold">{micOn ? 'Mute' : 'Unmute'}</span>
+            {micOn ? <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" /> : <MicOff className="w-4 h-4 sm:w-5 sm:h-5" />}
+            <span className="text-[9px] sm:text-[10px] font-bold">{micOn ? 'Mute' : 'Unmute'}</span>
           </button>
 
           {/* Camera */}
           <button
             onClick={() => setCameraOn(!cameraOn)}
-            className={`flex flex-col items-center gap-1 p-2 rounded-2xl w-16 sm:w-20 transition cursor-pointer ${
+            className={`flex flex-col items-center gap-1 p-1.5 sm:p-2 rounded-2xl w-12 sm:w-20 transition cursor-pointer ${
               cameraOn ? 'hover:bg-white/10 text-slate-200' : 'bg-rose-600/20 text-rose-400 hover:bg-rose-600/30'
             }`}
           >
-            {cameraOn ? <Video className="w-5 h-5 text-emerald-400" /> : <VideoOff className="w-5 h-5" />}
-            <span className="text-[10px] font-bold">{cameraOn ? 'Stop Video' : 'Start Video'}</span>
+            {cameraOn ? <Video className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" /> : <VideoOff className="w-4 h-4 sm:w-5 sm:h-5" />}
+            <span className="text-[9px] sm:text-[10px] font-bold">{cameraOn ? 'Stop' : 'Start'}</span>
           </button>
         </div>
 
@@ -897,50 +897,50 @@ function StudioRoom() {
           {/* Screen Share / Pitch Deck */}
           <button
             onClick={() => setScreenSharing(!screenSharing)}
-            className={`flex flex-col items-center gap-1 p-2 rounded-2xl w-16 sm:w-20 transition cursor-pointer ${
+            className={`flex flex-col items-center gap-1 p-1.5 sm:p-2 rounded-2xl w-12 sm:w-20 transition cursor-pointer ${
               screenSharing ? 'bg-emerald-600 text-white shadow-md' : 'hover:bg-white/10 text-emerald-400'
             }`}
           >
-            <Share2 className="w-5 h-5" />
-            <span className="text-[10px] font-bold">{screenSharing ? 'Stop Share' : 'Share Deck'}</span>
+            <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-[9px] sm:text-[10px] font-bold">{screenSharing ? 'Stop' : 'Deck'}</span>
           </button>
 
           {/* Attendees */}
           <button
             onClick={() => setActiveDrawer(activeDrawer === 'participants' ? null : 'participants')}
-            className={`flex flex-col items-center gap-1 p-2 rounded-2xl w-16 sm:w-20 transition cursor-pointer ${
+            className={`flex flex-col items-center gap-1 p-1.5 sm:p-2 rounded-2xl w-12 sm:w-20 transition cursor-pointer ${
               activeDrawer === 'participants' ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-slate-300'
             }`}
           >
             <div className="relative">
-              <Users className="w-5 h-5" />
-              <span className="absolute -top-1 -right-2 px-1 text-[9px] font-black rounded-full bg-blue-600 text-white">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="absolute -top-1 -right-2 px-1 text-[8px] sm:text-[9px] font-black rounded-full bg-blue-600 text-white">
                 2
               </span>
             </div>
-            <span className="text-[10px] font-bold">Attendees</span>
+            <span className="text-[9px] sm:text-[10px] font-bold">People</span>
           </button>
 
           {/* In-Meeting Chat */}
           <button
             onClick={() => setActiveDrawer(activeDrawer === 'chat' ? null : 'chat')}
-            className={`flex flex-col items-center gap-1 p-2 rounded-2xl w-16 sm:w-20 transition cursor-pointer ${
+            className={`flex flex-col items-center gap-1 p-1.5 sm:p-2 rounded-2xl w-12 sm:w-20 transition cursor-pointer ${
               activeDrawer === 'chat' ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-slate-300'
             }`}
           >
-            <MessageSquare className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Chat</span>
+            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-[9px] sm:text-[10px] font-bold">Chat</span>
           </button>
 
           {/* Meeting Notes */}
           <button
             onClick={() => setActiveDrawer(activeDrawer === 'notes' ? null : 'notes')}
-            className={`flex flex-col items-center gap-1 p-2 rounded-2xl w-16 sm:w-20 transition cursor-pointer ${
+            className={`flex flex-col items-center gap-1 p-1.5 sm:p-2 rounded-2xl w-12 sm:w-20 transition cursor-pointer ${
               activeDrawer === 'notes' ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-slate-300'
             }`}
           >
-            <FileText className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Minutes</span>
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-[9px] sm:text-[10px] font-bold">Notes</span>
           </button>
 
           {/* Quick Reaction Emojis */}
@@ -961,7 +961,7 @@ function StudioRoom() {
         <div>
           <button
             onClick={() => router.push('/meetings')}
-            className="flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-lg shadow-rose-600/30 transition active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 sm:px-6 py-2 sm:py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-lg shadow-rose-600/30 transition active:scale-95 cursor-pointer"
           >
             <PhoneOff className="w-4 h-4" />
             <span className="hidden sm:inline">End Meeting</span>

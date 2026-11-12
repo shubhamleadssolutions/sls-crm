@@ -260,7 +260,7 @@ function PipelineKanbanContent() {
       </div>
 
       {/* 8 Kanban Columns */}
-      <div className="flex gap-4 overflow-x-auto pb-6 pt-1">
+      <div className="flex gap-4 overflow-x-auto pb-6 pt-1 snap-x snap-mandatory scroll-smooth">
         {KANBAN_STAGES.map((col) => {
           const colProspects = filteredProspects.filter((p) => p.status === col.key);
           const isOver = dragOverColumn === col.key;
@@ -286,7 +286,7 @@ function PipelineKanbanContent() {
                   handleStatusChange(droppedId, col.key);
                 }
               }}
-              className={`w-80 shrink-0 rounded-3xl p-3.5 border transition-all duration-200 flex flex-col max-h-[78vh] ${
+              className={`w-[82vw] sm:w-80 shrink-0 snap-center sm:snap-start rounded-3xl p-3.5 border transition-all duration-200 flex flex-col max-h-[78vh] ${
                 isOver
                   ? 'bg-blue-100/90 border-blue-500 ring-2 ring-blue-400 scale-[1.01] shadow-lg'
                   : 'bg-slate-100/80 border-slate-200/90 shadow-xs'
