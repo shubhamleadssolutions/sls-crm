@@ -141,7 +141,7 @@ export default function DashboardPage() {
               </h1>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Welcome, <strong>{currentUser?.name || 'Ansh Kumar'}</strong> &bull; {currentUser?.designation || 'Managing Director'}
+              Welcome, <strong>{currentUser?.name || 'Abhinav'}</strong> &bull; {currentUser?.designation || 'Managing Director'}
             </p>
           </div>
 

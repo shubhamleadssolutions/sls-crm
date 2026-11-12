@@ -380,7 +380,7 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
               </div>
 
               <div>
-                <p className="text-xs font-extrabold text-slate-900">Ansh Kumar</p>
+                <p className="text-xs font-extrabold text-slate-900">Abhinav</p>
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                   Managing Director (Authorized Signatory)
                 </p>

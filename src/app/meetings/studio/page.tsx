@@ -44,7 +44,7 @@ function StudioRoom() {
   const [phase, setPhase] = useState<'green-room' | 'connecting' | 'in-meeting'>('green-room');
 
   // Participant Identity in Room
-  const [userName, setUserName] = useState('Ansh Kumar');
+  const [userName, setUserName] = useState('Abhinav');
   const [userRole, setUserRole] = useState('Managing Director (Host)');
 
   // Media Controls
@@ -91,7 +91,7 @@ function StudioRoom() {
       .then((res) => res.json())
       .then((data) => {
         if (data.user) {
-          setUserName(data.user.name || 'Ansh Kumar');
+          setUserName(data.user.name || 'Abhinav');
           setUserRole(data.user.role === 'ADMIN' ? 'Managing Director (Host)' : `${data.user.designation || 'Team Member'} (Host)`);
         }
       })

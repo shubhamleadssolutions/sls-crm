@@ -277,7 +277,7 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
 
               <div className="flex flex-wrap items-center gap-4 mt-2.5 text-xs text-slate-500">
                 <span>
-                  Assigned to: <strong className="text-slate-700">{prospect.assignedUser?.name || 'Ansh Kumar (IT Head)'}</strong>
+                  Assigned to: <strong className="text-slate-700">{prospect.assignedUser?.name || 'Abhinav (Managing Director)'}</strong>
                 </span>
                 <span>&bull;</span>
                 <span>
@@ -580,7 +580,7 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
                     <div key={n.id} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs space-y-1">
                       <p className="text-slate-800 leading-relaxed whitespace-pre-wrap">{n.content}</p>
                       <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-200/60">
-                        <span>{n.user?.name || 'Ansh Kumar'}</span>
+                        <span>{n.user?.name || 'Abhinav'}</span>
                         <span>{formatDateTime(n.createdAt)}</span>
                       </div>
                     </div>

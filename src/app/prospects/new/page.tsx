@@ -395,7 +395,7 @@ export default function NewProspectPage() {
                   onChange={handleChange}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:ring-2 focus:ring-blue-600"
                 >
-                  <option value="">Default (Ansh Kumar - IT Head)</option>
+                  <option value="">Default (Abhinav - Managing Director)</option>
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.name} ({u.designation || u.role})

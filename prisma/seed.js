@@ -4,9 +4,9 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Seeding fresh SLS CRM with only Ansh Kumar (ADMIN) and standard templates...');
+  console.log('Seeding fresh SLS CRM with only Abhinav (ADMIN) and standard templates...');
 
-  const passwordHash = await bcrypt.hash('ANSH@123', 10);
+  const passwordHash = await bcrypt.hash('ABHINAV@123', 10);
 
   // 1. Wipe all tables clean for fresh start
   await prisma.auditLog.deleteMany({});
@@ -23,23 +23,23 @@ async function main() {
   await prisma.template.deleteMany({});
   await prisma.user.deleteMany({});
 
-  // 2. Create the Sole Initial Administrator: Ansh Kumar
-  const ansh = await prisma.user.create({
+  // 2. Create the Sole Initial Administrator: Abhinav
+  const abhinav = await prisma.user.create({
     data: {
-      name: 'Ansh Kumar',
-      username: 'ansh.kumar',
-      email: 'ansh.kumar@shubhamleadssolutions.com',
+      name: 'Abhinav',
+      username: 'abhinav',
+      email: 'abhinav@shubhamleadssolutions.com',
       passwordHash: passwordHash,
       role: 'ADMIN',
-      designation: 'Managing Director - Acting as Admin',
+      designation: 'Managing Director',
       phone: '+91 9876543210',
     },
   });
 
   console.log('Created fresh administrator:', {
-    name: ansh.name,
-    username: ansh.username,
-    role: ansh.role,
+    name: abhinav.name,
+    username: abhinav.username,
+    role: abhinav.role,
   });
 
   // 3. Create Standard Communication Templates (Section 19 of PDF)
@@ -70,7 +70,7 @@ async function main() {
       channel: 'EMAIL',
       category: 'Outreach',
       content:
-        'Subject: Scaling Admissions & Inquiries for {{company_name}}\n\nDear {{contact_name}},\n\nI hope you are doing well.\n\nAt Shubham Leads Solutions, we partner with premier institutes and educational companies to generate verified, high-converting leads through targeted Meta & Google campaigns.\n\nWould you be open to a 10-minute discovery call this week?\n\nBest regards,\nAnsh Kumar\nIT Head, Shubham Leads Solutions',
+        'Subject: Scaling Admissions & Inquiries for {{company_name}}\n\nDear {{contact_name}},\n\nI hope you are doing well.\n\nAt Shubham Leads Solutions, we partner with premier institutes and educational companies to generate verified, high-converting leads through targeted Meta & Google campaigns.\n\nWould you be open to a 10-minute discovery call this week?\n\nBest regards,\nAbhinav\nManaging Director, Shubham Leads Solutions',
     },
     {
       title: 'LinkedIn Connection Message',
