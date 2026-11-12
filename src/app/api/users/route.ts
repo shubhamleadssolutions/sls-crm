@@ -14,7 +14,6 @@ export async function GET() {
         id: true,
         username: true,
         name: true,
-        email: true,
         role: true,
         designation: true,
         phone: true,
@@ -47,16 +46,16 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, username, email, password, role, designation, phone } = body;
+    const { name, username, password, role, designation, phone } = body;
 
-    if (!name?.trim() || !username?.trim() || !email?.trim() || !password?.trim()) {
-      return NextResponse.json({ error: 'Name, Username, Email, and Password are required' }, { status: 400 });
+    if (!name?.trim() || !username?.trim() || !password?.trim()) {
+      return NextResponse.json({ error: 'Name, Username, and Password are required' }, { status: 400 });
     }
 
     const cleanUsername = username.trim().toLowerCase();
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanEmail = `${cleanUsername}@sls.internal`;
 
-    // Check duplicate username or email
+    // Check duplicate username
     const existing = await prisma.user.findFirst({
       where: {
         OR: [
@@ -70,7 +69,7 @@ export async function POST(req: Request) {
       if (existing.username === cleanUsername) {
         return NextResponse.json({ error: `Username "${cleanUsername}" is already taken` }, { status: 400 });
       }
-      return NextResponse.json({ error: `Email "${cleanEmail}" is already registered` }, { status: 400 });
+      return NextResponse.json({ error: `User with username "${cleanUsername}" already exists` }, { status: 400 });
     }
 
     const passwordHash = await hashPassword(password.trim());
@@ -90,7 +89,6 @@ export async function POST(req: Request) {
         id: true,
         username: true,
         name: true,
-        email: true,
         role: true,
         designation: true,
         phone: true,

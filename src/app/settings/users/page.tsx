@@ -8,7 +8,6 @@ import {
   UserPlus,
   Shield,
   ShieldCheck,
-  Mail,
   Lock,
   Phone,
   Briefcase,
@@ -65,6 +64,20 @@ export default function UserManagementPage() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [confirmUserAction, setConfirmUserAction] = useState<{ user: any; action: 'deactivate' | 'activate' } | null>(null);
+  
+  // Edit Profile / Manage User State
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    username: '',
+    role: 'BD_INTERN',
+    designation: '',
+    phone: '',
+    password: '',
+    isActive: true,
+  });
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -72,7 +85,6 @@ export default function UserManagementPage() {
   const [form, setForm] = useState({
     name: '',
     username: '',
-    email: '',
     password: '',
     role: 'BD_INTERN',
     designation: '',
@@ -102,6 +114,62 @@ export default function UserManagementPage() {
     fetchUsers();
   }, []);
 
+  const handleOpenEdit = (u: any) => {
+    setEditingUser(u);
+    setEditForm({
+      name: u.name || '',
+      username: u.username || '',
+      role: u.role || 'BD_INTERN',
+      designation: u.designation || '',
+      phone: u.phone || '',
+      password: '',
+      isActive: u.isActive,
+    });
+    setError('');
+    setEditModalOpen(true);
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    setError('');
+    setSuccessMsg('');
+    setSubmitting(true);
+
+    try {
+      const payload: any = {
+        name: editForm.name.trim(),
+        role: editForm.role,
+        designation: editForm.designation.trim(),
+        phone: editForm.phone.trim(),
+        isActive: editForm.isActive,
+      };
+      if (editForm.password.trim()) {
+        payload.password = editForm.password.trim();
+      }
+
+      const res = await fetch(`/api/users/${editingUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update user profile');
+      }
+
+      setSuccessMsg(`User profile for "${data.user.name}" (@${data.user.username}) updated successfully!`);
+      setEditModalOpen(false);
+      setEditingUser(null);
+      fetchUsers();
+    } catch (err: any) {
+      setError(err.message || 'Error updating user profile');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -120,12 +188,11 @@ export default function UserManagementPage() {
         throw new Error(data.error || 'Failed to create user');
       }
 
-      setSuccessMsg(`User "${data.user.name}" created successfully!`);
+      setSuccessMsg(`User "${data.user.name}" (@${data.user.username}) created successfully!`);
       setShowAddModal(false);
       setForm({
         name: '',
         username: '',
-        email: '',
         password: '',
         role: 'BD_INTERN',
         designation: '',
@@ -213,7 +280,7 @@ export default function UserManagementPage() {
               <thead className="bg-slate-50/80 text-slate-600 uppercase font-bold text-[10px] border-b border-slate-200">
                 <tr>
                   <th className="py-3.5 px-4">User / Full Name</th>
-                  <th className="py-3.5 px-4">Username & Email</th>
+                  <th className="py-3.5 px-4">Username</th>
                   <th className="py-3.5 px-4">Role & Access Level</th>
                   <th className="py-3.5 px-4">Designation</th>
                   <th className="py-3.5 px-4">Assigned Leads</th>
@@ -256,7 +323,6 @@ export default function UserManagementPage() {
                         </td>
                         <td className="py-3.5 px-4">
                           <p className="font-mono font-bold text-slate-800">@{u.username}</p>
-                          <p className="text-[11px] text-slate-500">{u.email}</p>
                         </td>
                         <td className="py-3.5 px-4">
                           <span
@@ -285,30 +351,41 @@ export default function UserManagementPage() {
                           )}
                         </td>
                         <td className="py-3.5 px-4 text-right">
-                          {u.id === currentUser?.id ? (
-                            <span
-                              className="text-[11px] font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 cursor-not-allowed select-none"
-                              title="You cannot deactivate your own account"
-                            >
-                              Current Account
-                            </span>
-                          ) : (
+                          <div className="flex items-center justify-end gap-1.5">
                             <button
-                              onClick={() =>
-                                setConfirmUserAction({
-                                  user: u,
-                                  action: u.isActive ? 'deactivate' : 'activate',
-                                })
-                              }
-                              className={`text-xs font-bold transition px-2.5 py-1 rounded-lg cursor-pointer ${
-                                u.isActive
-                                  ? 'text-rose-600 hover:text-rose-800 hover:bg-rose-50'
-                                  : 'text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50'
-                              }`}
+                              onClick={() => handleOpenEdit(u)}
+                              className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                              title="Manage User Profile & Permissions"
                             >
-                              {u.isActive ? 'Deactivate' : 'Activate'}
+                              <Edit className="w-3.5 h-3.5" />
+                              <span>Edit</span>
                             </button>
-                          )}
+
+                            {u.id === currentUser?.id ? (
+                              <span
+                                className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 cursor-not-allowed select-none"
+                                title="You cannot deactivate your own account"
+                              >
+                                Self
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() =>
+                                  setConfirmUserAction({
+                                    user: u,
+                                    action: u.isActive ? 'deactivate' : 'activate',
+                                  })
+                                }
+                                className={`text-xs font-bold transition px-2.5 py-1 rounded-lg cursor-pointer ${
+                                  u.isActive
+                                    ? 'text-rose-600 hover:text-rose-800 hover:bg-rose-50'
+                                    : 'text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50'
+                                }`}
+                              >
+                                {u.isActive ? 'Deactivate' : 'Activate'}
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -322,7 +399,7 @@ export default function UserManagementPage() {
         {/* Modal: Create New User */}
         {showAddModal && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto animate-scale-in">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
@@ -336,7 +413,7 @@ export default function UserManagementPage() {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="text-slate-400 hover:text-slate-600 text-xl font-bold p-1"
+                  className="text-slate-400 hover:text-slate-600 text-xl font-bold p-1 cursor-pointer"
                 >
                   &times;
                 </button>
@@ -375,20 +452,6 @@ export default function UserManagementPage() {
                       value={form.username}
                       onChange={(e) => setForm({ ...form, username: e.target.value })}
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-medium focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Email Address <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="e.g. name@shubhamleadssolutions.com"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-none"
                     />
                   </div>
 
@@ -438,7 +501,7 @@ export default function UserManagementPage() {
                     />
                   </div>
 
-                  <div className="sm:col-span-2">
+                  <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
                       Phone Number (Optional)
                     </label>
@@ -460,14 +523,14 @@ export default function UserManagementPage() {
                   <button
                     type="button"
                     onClick={() => setShowAddModal(false)}
-                    className="px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50"
+                    className="px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition disabled:opacity-50"
+                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition disabled:opacity-50 cursor-pointer"
                   >
                     {submitting ? 'Creating User...' : 'Create User Account'}
                   </button>
@@ -477,10 +540,158 @@ export default function UserManagementPage() {
           </div>
         )}
 
+        {/* Modal: Manage / Edit User Profile */}
+        {editModalOpen && editingUser && (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto animate-scale-in">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                    <Edit className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900">Manage User Profile</h3>
+                    <p className="text-[11px] text-slate-500">
+                      Update credentials, role permissions, and profile details for <strong className="text-slate-800">@{editingUser.username}</strong>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditModalOpen(false);
+                    setEditingUser(null);
+                  }}
+                  className="text-slate-400 hover:text-slate-600 text-xl font-bold p-1 cursor-pointer"
+                >
+                  &times;
+                </button>
+              </div>
+
+              {error && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleUpdateUser} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Full Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Username
+                    </label>
+                    <input
+                      type="text"
+                      disabled
+                      value={editForm.username}
+                      className="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-mono font-medium text-slate-500 cursor-not-allowed"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Role (Access Level) <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={editForm.role}
+                      onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:ring-2 focus:ring-blue-600"
+                    >
+                      <option value="ADMIN">Managing Director</option>
+                      <option value="CEO">Chief Executive Officer (CEO)</option>
+                      <option value="BD_INTERN">Business Development Intern</option>
+                      <option value="SALES">Sales Executive</option>
+                      <option value="MARKETING">Marketing Lead</option>
+                      <option value="IT_ADMIN">IT Manager</option>
+                      <option value="ACCOUNT_MANAGER">Account Manager</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Designation
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Managing Director / Sales Executive"
+                      value={editForm.designation}
+                      onChange={(e) => setEditForm({ ...editForm, designation: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Contact Phone
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="+91 9876543210"
+                      value={editForm.phone}
+                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Set New Password
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="Leave blank to keep current"
+                      value={editForm.password}
+                      onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100 text-slate-600 text-[11px] leading-relaxed">
+                  <strong>Role Description:</strong> {ROLE_INFO[editForm.role]?.desc}
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditModalOpen(false);
+                      setEditingUser(null);
+                    }}
+                    className="px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition disabled:opacity-50 cursor-pointer"
+                  >
+                    {submitting ? 'Saving Changes...' : 'Save Profile Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* Sensitive Action Confirmation Modal: Deactivate / Activate User */}
         {confirmUserAction && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
-            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-sm w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-sm w-full p-6 space-y-4 animate-scale-in">
               <div className="flex items-center gap-3">
                 <div
                   className={`p-2.5 rounded-2xl border ${

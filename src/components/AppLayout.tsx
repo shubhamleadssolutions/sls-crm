@@ -378,7 +378,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
               {/* Profile Dropdown Menu */}
               {profileDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-3 z-50 animate-scale-in">
                   {/* Dropdown Header Card */}
                   <div className="p-3 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 rounded-2xl border border-blue-100/70 mb-2">
                     <div className="flex items-center gap-2.5">
@@ -655,7 +655,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* My Profile Modal */}
       {showProfileModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-md w-full p-6 space-y-5 animate-scale-in">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
@@ -693,16 +693,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
-            {/* Profile Field Details */}
+            {/* Profile Field Details (Zero email references for company privacy) */}
             <div className="space-y-3 text-xs">
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-500 font-medium">Username</span>
                 <span className="font-mono font-bold text-slate-900">@{user.username}</span>
-              </div>
-
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-slate-500 font-medium">Email Address</span>
-                <span className="font-semibold text-slate-900">{user.email}</span>
               </div>
 
               {user.phone && (
@@ -778,8 +773,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-sm w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-sm w-full p-6 space-y-4 animate-scale-in">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100">
                 <LogOut className="w-5 h-5" />

@@ -37,7 +37,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         id: true,
         username: true,
         name: true,
-        email: true,
         role: true,
         designation: true,
         phone: true,
