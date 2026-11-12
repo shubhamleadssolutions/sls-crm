@@ -130,7 +130,7 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         {/* Welcome Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs">
           <div>
@@ -194,7 +194,7 @@ export default function DashboardPage() {
               return (
                 <div
                   key={card.label}
-                  className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition group"
+                  className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">

@@ -168,7 +168,7 @@ export default function LoginPage() {
 
       {/* Right Column: Clean, Attractive Executive Login Card */}
       <div className="w-full lg:w-5/12 xl:w-2/5 flex flex-col justify-center items-center p-6 sm:p-10 lg:p-12 relative">
-        <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-200/50 p-8 sm:p-10 space-y-6 relative">
+        <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-200/50 p-8 sm:p-10 space-y-6 relative animate-scale-in">
           {/* Logo inserted right above Sign In heading */}
           <div className="flex flex-col items-start space-y-3">
             <div className="relative w-48 h-20">

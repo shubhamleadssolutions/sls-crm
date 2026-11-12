@@ -361,21 +361,25 @@ export default function TeamChatPage() {
               )}
             </div>
 
-            {/* Quick Celebrate Shortcuts */}
-            <div className="hidden sm:flex items-center gap-1.5">
+            {/* Quick Shortcuts (Responsive: Compact on mobile, expanded on desktop) */}
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
               <button
                 type="button"
                 onClick={() => setInputText('🎉 Milestone Reached: Won a new college partnership! Retainer contract confirmed.')}
-                className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-[11px] font-bold border border-amber-200 transition cursor-pointer flex items-center gap-1"
+                title="Celebrate Win"
+                className="px-2 sm:px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-[10px] sm:text-[11px] font-bold border border-amber-200 transition cursor-pointer flex items-center gap-1"
               >
-                <span>🏆 Celebrate Win</span>
+                <span>🏆</span>
+                <span className="hidden xs:inline sm:inline">Win</span>
               </button>
               <button
                 type="button"
                 onClick={() => setInputText('📅 Discovery meeting successfully completed with the Admissions Committee. Proposal requested!')}
-                className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[11px] font-bold border border-blue-200 transition cursor-pointer flex items-center gap-1"
+                title="Log Meeting"
+                className="px-2 sm:px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[10px] sm:text-[11px] font-bold border border-blue-200 transition cursor-pointer flex items-center gap-1"
               >
-                <span>📅 Log Meeting</span>
+                <span>📅</span>
+                <span className="hidden xs:inline sm:inline">Meeting</span>
               </button>
             </div>
           </div>

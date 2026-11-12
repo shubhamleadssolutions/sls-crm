@@ -154,7 +154,7 @@ export default function MeetingsPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         
         {/* ========================================================================= */}
         {/* HEADER: SLS Client Meetings & Strategy Consultations                      */}

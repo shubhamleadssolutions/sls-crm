@@ -130,7 +130,7 @@ function PipelineKanbanContent() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header Card */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs">
         <div>
@@ -254,8 +254,8 @@ function PipelineKanbanContent() {
             <strong>Interactive Drag &amp; Drop:</strong> Click and drag any card to advance through stages. Stage updates are instantly saved to the database.
           </span>
         </div>
-        <span className="hidden sm:inline text-[11px] font-bold text-blue-600">
-          {filteredProspects.length} Total Prospects
+        <span className="text-[10px] sm:text-[11px] font-bold text-blue-600 shrink-0">
+          {filteredProspects.length} Prospects
         </span>
       </div>
 

@@ -171,7 +171,7 @@ export default function BillingPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         {/* ========================================================================= */}
         {/* TOP LEVEL NAVIGATION & TAB CONTROLS (INVOICES & INVENTORY CATALOG)        */}
         {/* ========================================================================= */}

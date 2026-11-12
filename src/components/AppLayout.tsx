@@ -438,58 +438,219 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden bg-white border-b border-slate-200 p-4 space-y-3 shadow-lg max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-              <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
-                {userInitials}
-              </div>
-              <div>
-                <p className="text-xs font-bold text-slate-900">{user.name}</p>
-                <p className="text-[10px] text-slate-500">{user.designation || user.role}</p>
-              </div>
-            </div>
-
-            <nav className="space-y-4">
-              {navSections.map((sec) => (
-                <div key={sec.title} className="space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    {sec.title}
-                  </p>
-                  {sec.items.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                    >
-                      <item.icon className="w-4 h-4 text-slate-500" />
-                      <span>{item.label}</span>
-                    </Link>
-                  ))}
-                </div>
-              ))}
-            </nav>
-
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                setShowLogoutModal(true);
-              }}
-              className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-rose-50 text-rose-700 text-xs font-bold cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Sign Out</span>
-            </button>
-          </div>
-        )}
-
-        {/* Right Main Content Area - Independent Smooth Scroll */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+        {/* Right Main Content Area - Independent Smooth Scroll with mobile bottom padding */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-7xl mx-auto w-full animate-fade-in">
           {children}
         </main>
       </div>
+
+      {/* ========================================================================= */}
+      {/* MOBILE FULL SLIDING DRAWER (100% Identical Feature Parity to Desktop)     */}
+      {/* ========================================================================= */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop Blur */}
+          <div
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity duration-200"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Sliding Drawer Container */}
+          <aside className="fixed inset-y-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl flex flex-col z-50 animate-drawer-right">
+            {/* Drawer Header: Logo + Close Button */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
+              <div className="relative w-36 h-12">
+                <Image
+                  src="/sls-logo-full.png"
+                  alt="Shubham Leads Solutions"
+                  fill
+                  className="object-contain object-left"
+                  priority
+                />
+              </div>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+                title="Close Navigation"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* User Profile Summary Card */}
+            <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                  {userInitials}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-black text-slate-900 truncate leading-tight">{user.name}</p>
+                  <p className="text-[11px] text-slate-500 font-mono truncate">@{user.username}</p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="text-[9px] font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                      {user.role}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setShowProfileModal(true);
+                      }}
+                      className="text-[10px] text-blue-600 font-bold hover:underline"
+                    >
+                      View Profile
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Scrollable Navigation Sections */}
+            <nav className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
+              {navSections.map((section) => (
+                <div key={section.title} className="space-y-1">
+                  <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    {section.title}
+                  </p>
+                  {section.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive =
+                      pathname === item.href ||
+                      (item.href === '/prospects' &&
+                        pathname.startsWith('/prospects') &&
+                        !pathname.includes('import') &&
+                        !pathname.includes('new'));
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                          isActive
+                            ? 'bg-blue-50 text-blue-600 font-bold shadow-xs'
+                            : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Icon
+                            className={`w-4 h-4 ${
+                              isActive ? 'text-blue-600 stroke-[2.2]' : 'text-slate-500'
+                            }`}
+                          />
+                          <span>{item.label}</span>
+                        </div>
+                        {isActive && <ChevronRight className="w-3.5 h-3.5 text-blue-600" />}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
+
+              {/* Administration - Full parity with desktop sidebar */}
+              {isExecutive && (
+                <div className="pt-2 border-t border-slate-100 space-y-1">
+                  <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Administration
+                  </p>
+                  <Link
+                    href="/settings/users"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                      pathname.startsWith('/settings/users')
+                        ? 'bg-blue-50 text-blue-600 font-bold shadow-xs'
+                        : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <UserCog className="w-4 h-4 text-blue-600" />
+                      <span>User Management</span>
+                    </div>
+                    <span className="text-[9px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded-full">
+                      {user.role}
+                    </span>
+                  </Link>
+                </div>
+              )}
+            </nav>
+
+            {/* Drawer Footer: Sign Out Button */}
+            <div className="p-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setShowLogoutModal(true);
+                }}
+                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition cursor-pointer"
+              >
+                <LogOut className="w-4 h-4 text-rose-600" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MOBILE BOTTOM NAVIGATION BAR (Instant 1-Touch Access on All Phones)         */}
+      {/* ========================================================================= */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200/90 z-30 px-2 py-1.5 flex items-center justify-around shadow-lg">
+        {/* Dashboard */}
+        <Link
+          href="/"
+          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition ${
+            pathname === '/' ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <LayoutDashboard className="w-4 h-4" />
+          <span className="text-[10px]">Home</span>
+        </Link>
+
+        {/* Prospects */}
+        <Link
+          href="/prospects"
+          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition ${
+            pathname.startsWith('/prospects') && !pathname.includes('import') && !pathname.includes('new')
+              ? 'text-blue-600 font-bold'
+              : 'text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span className="text-[10px]">Prospects</span>
+        </Link>
+
+        {/* Pipeline Kanban */}
+        <Link
+          href="/pipeline"
+          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition ${
+            pathname.startsWith('/pipeline') ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <Kanban className="w-4 h-4" />
+          <span className="text-[10px]">Pipeline</span>
+        </Link>
+
+        {/* Team Chat */}
+        <Link
+          href="/chat"
+          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition ${
+            pathname.startsWith('/chat') ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <MessagesSquare className="w-4 h-4" />
+          <span className="text-[10px]">Chat</span>
+        </Link>
+
+        {/* More Menu (Toggles full drawer) */}
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition cursor-pointer ${
+            mobileMenuOpen ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <Menu className="w-4 h-4" />
+          <span className="text-[10px]">More</span>
+        </button>
+      </nav>
 
       {/* My Profile Modal */}
       {showProfileModal && (

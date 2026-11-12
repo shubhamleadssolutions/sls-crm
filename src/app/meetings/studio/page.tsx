@@ -61,6 +61,7 @@ function StudioRoom() {
 
   // Floating Reactions
   const [floatingEmojis, setFloatingEmojis] = useState<Array<{ id: number; emoji: string; left: number }>>([]);
+  const [showReactionsBar, setShowReactionsBar] = useState(false);
 
   // In-Meeting Chat
   const [inMeetingMessages, setInMeetingMessages] = useState<Array<{ sender: string; text: string; time: string }>>([
@@ -943,17 +944,49 @@ function StudioRoom() {
             <span className="text-[9px] sm:text-[10px] font-bold">Notes</span>
           </button>
 
-          {/* Quick Reaction Emojis */}
-          <div className="hidden lg:flex items-center gap-1 p-1 bg-white/5 rounded-2xl border border-white/10">
-            {['👏', '👍', '🎯', '🔥', '❤️'].map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => triggerReaction(emoji)}
-                className="hover:scale-125 transition text-base p-1 cursor-pointer"
-              >
-                {emoji}
-              </button>
-            ))}
+          {/* Reactions: Mobile Popover Toggle + Desktop Inline Bar */}
+          <div className="relative">
+            {/* Mobile Toggle Button */}
+            <button
+              onClick={() => setShowReactionsBar(!showReactionsBar)}
+              className={`lg:hidden flex flex-col items-center gap-1 p-1.5 rounded-2xl w-12 transition cursor-pointer ${
+                showReactionsBar ? 'bg-white/20 text-white' : 'hover:bg-white/10 text-slate-300'
+              }`}
+            >
+              <span className="text-base leading-none">👏</span>
+              <span className="text-[9px] font-bold">React</span>
+            </button>
+
+            {/* Floating Reaction Bar (shown on mobile toggle) */}
+            {showReactionsBar && (
+              <div className="lg:hidden absolute bottom-full mb-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 p-2 bg-slate-900/95 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl z-50 animate-sheet-up">
+                {['👏', '👍', '🎯', '🔥', '❤️', '🎉'].map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => {
+                      triggerReaction(emoji);
+                      setShowReactionsBar(false);
+                    }}
+                    className="hover:scale-125 transition text-lg p-1.5 cursor-pointer active:scale-95"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Desktop Inline Reactions */}
+            <div className="hidden lg:flex items-center gap-1 p-1 bg-white/5 rounded-2xl border border-white/10">
+              {['👏', '👍', '🎯', '🔥', '❤️', '🎉'].map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => triggerReaction(emoji)}
+                  className="hover:scale-125 transition text-base p-1 cursor-pointer"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
