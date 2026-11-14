@@ -149,41 +149,43 @@ export default function ProfilePage() {
         {/* Executive Banner & Header Card */}
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden">
           {/* Top Banner Gradient */}
-          <div className="h-32 sm:h-40 bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 relative">
+          <div className="h-36 sm:h-44 md:h-48 bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 relative">
             <div className="absolute inset-0 bg-[radial-gradient(#ffffff15_1px,transparent_1px)] [background-size:16px_16px] opacity-40" />
-            <div className="absolute top-4 right-4 flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 text-white text-[11px] font-bold">
+            <div className="absolute top-4 right-4 flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 text-white text-[11px] font-bold shadow-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>SLS Enterprise User</span>
             </div>
           </div>
 
-          {/* Profile Identity Details Row */}
-          <div className="px-5 sm:px-8 pb-6 pt-0 relative flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-14 sm:-mt-16">
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-3xl sm:text-4xl shadow-xl ring-4 ring-white shrink-0">
+          {/* Profile Identity Details Row (Spacious & Clean, Zero Overlapping) */}
+          <div className="px-5 sm:px-8 pb-6 pt-3 relative flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 min-w-0">
+              {/* Avatar Box with direct negative top margin so it floats elegantly over the banner */}
+              <div className="relative -mt-16 sm:-mt-20 md:-mt-22 w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-3xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-3xl sm:text-4xl md:text-5xl shadow-xl ring-4 sm:ring-6 ring-white shrink-0 z-10">
                 {initials}
               </div>
 
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              {/* Identity Details */}
+              <div className="space-y-1.5 min-w-0">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
                     {user.name}
                   </h1>
-                  <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
+                  <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-lg border border-slate-200">
                     @{user.username}
                   </span>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                  <span className="font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100">
+                  <span className="font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200/80">
                     {user.role}
                   </span>
                   <span>&bull;</span>
-                  <span className="font-medium text-slate-700">{user.designation || 'Team Member'}</span>
+                  <span className="font-semibold text-slate-700">{user.designation || 'Team Member'}</span>
                   {user.phone && (
                     <>
                       <span>&bull;</span>
-                      <span className="flex items-center gap-1 text-slate-600">
+                      <span className="flex items-center gap-1 font-medium text-slate-600">
                         <Phone className="w-3.5 h-3.5 text-slate-400" /> {user.phone}
                       </span>
                     </>
@@ -192,8 +194,9 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 self-start sm:self-auto">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200">
+            {/* Account Status Badge */}
+            <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-xs">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                 Active Account
               </span>
