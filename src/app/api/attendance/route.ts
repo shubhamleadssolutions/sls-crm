@@ -2,68 +2,181 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionUser } from '@/lib/auth';
 
-// Helper to get start and end of day in UTC
-function getDayBounds(targetDate = new Date()) {
-  const start = new Date(targetDate);
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date(targetDate);
-  end.setHours(23, 59, 59, 999);
-
-  return { start, end };
+// Helper to get IST (UTC+5:30) date object
+function getISTDate(date = new Date()) {
+  const utc = date.getTime() + date.getTimezoneOffset() * 60000;
+  return new Date(utc + 3600000 * 5.5);
 }
 
-export async function GET() {
+// Helper to get start and end of day in UTC for a given IST date
+function getISTDayBounds(targetDate = new Date()) {
+  const ist = getISTDate(targetDate);
+  
+  // Year, month, day in IST
+  const y = ist.getFullYear();
+  const m = ist.getMonth();
+  const d = ist.getDate();
+
+  // 00:00:00 IST in UTC is previous day 18:30:00 UTC
+  const startUTC = new Date(Date.UTC(y, m, d, 0, 0, 0, 0) - 3600000 * 5.5);
+  // 23:59:59.999 IST in UTC
+  const endUTC = new Date(Date.UTC(y, m, d, 23, 59, 59, 999) - 3600000 * 5.5);
+
+  return { startUTC, endUTC, istYear: y, istMonth: m + 1, istDay: d };
+}
+
+export async function GET(req: Request) {
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { start: todayStart, end: todayEnd } = getDayBounds();
+    const { searchParams } = new URL(req.url);
+    const now = new Date();
+    const { startUTC: todayStart, endUTC: todayEnd, istYear, istMonth, istDay } = getISTDayBounds(now);
 
-    // Fetch today's record for this user
-    const todayRecord = await prisma.attendance.findFirst({
+    // Optional month query: e.g. "2026-11"
+    const monthQuery = searchParams.get('month'); // YYYY-MM
+    let filterYear = istYear;
+    let filterMonth = istMonth; // 1-12
+
+    if (monthQuery && monthQuery.includes('-')) {
+      const parts = monthQuery.split('-');
+      const py = parseInt(parts[0], 10);
+      const pm = parseInt(parts[1], 10);
+      if (!isNaN(py) && !isNaN(pm) && pm >= 1 && pm <= 12) {
+        filterYear = py;
+        filterMonth = pm;
+      }
+    }
+
+    // Month start and end in IST converted to UTC
+    const monthStartUTC = new Date(Date.UTC(filterYear, filterMonth - 1, 1, 0, 0, 0, 0) - 3600000 * 5.5);
+    const lastDayOfMonth = new Date(filterYear, filterMonth, 0).getDate();
+    const monthEndUTC = new Date(Date.UTC(filterYear, filterMonth - 1, lastDayOfMonth, 23, 59, 59, 999) - 3600000 * 5.5);
+
+    // 1. Fetch Today's Shift for Current User:
+    // First, check if there is an active open shift (punchOut === null)
+    let todayRecord = await prisma.attendance.findFirst({
       where: {
         userId: sessionUser.id,
-        date: {
-          gte: todayStart,
-          lte: todayEnd,
-        },
+        punchOut: null,
       },
       orderBy: { punchIn: 'desc' },
     });
 
-    // Fetch recent 30 records for this user
-    const history = await prisma.attendance.findMany({
+    // If no active open shift, check if they completed a shift today
+    if (!todayRecord) {
+      todayRecord = await prisma.attendance.findFirst({
+        where: {
+          userId: sessionUser.id,
+          OR: [
+            {
+              date: {
+                gte: todayStart,
+                lte: todayEnd,
+              },
+            },
+            {
+              punchIn: {
+                gte: todayStart,
+                lte: todayEnd,
+              },
+            },
+          ],
+        },
+        orderBy: { punchIn: 'desc' },
+      });
+    }
+
+    // 2. Fetch User's Attendance for the Selected Month (for Calendar Grid & Stats)
+    const monthRecords = await prisma.attendance.findMany({
       where: {
         userId: sessionUser.id,
+        punchIn: {
+          gte: monthStartUTC,
+          lte: monthEndUTC,
+        },
       },
-      orderBy: { date: 'desc' },
-      take: 30,
+      orderBy: { punchIn: 'asc' },
     });
 
-    // Compute basic statistics
-    const totalDays = history.length;
-    const presentCount = history.filter((h) => h.status === 'PRESENT').length;
-    const lateCount = history.filter((h) => h.status === 'LATE').length;
-    const halfDayCount = history.filter((h) => h.status === 'HALF_DAY').length;
+    // 3. Compute Calendar-Wise Attendance Map and Counts
+    // Map of date string "YYYY-MM-DD" -> Record
+    const attendanceByDate: Record<string, any> = {};
+    let totalPresent = 0;
+    let totalLate = 0;
+    let totalHalfDay = 0;
+    let totalLeave = 0;
+    let totalHoursLogged = 0;
 
-    let totalHours = 0;
-    let completedDays = 0;
-    history.forEach((h) => {
-      if (h.workingHours) {
-        totalHours += Number(h.workingHours);
-        completedDays++;
+    monthRecords.forEach((rec) => {
+      const recIST = getISTDate(new Date(rec.punchIn));
+      const dateKey = `${recIST.getFullYear()}-${String(recIST.getMonth() + 1).padStart(2, '0')}-${String(recIST.getDate()).padStart(2, '0')}`;
+      
+      attendanceByDate[dateKey] = {
+        id: rec.id,
+        date: rec.date,
+        punchIn: rec.punchIn,
+        punchOut: rec.punchOut,
+        status: rec.status, // PRESENT, LATE, HALF_DAY, LEAVE, ABSENT
+        plannedTasks: rec.plannedTasks,
+        workDone: rec.workDone,
+        workLocation: rec.workLocation,
+        workingHours: rec.workingHours ? Number(rec.workingHours) : null,
+      };
+
+      if (rec.status === 'PRESENT') totalPresent++;
+      else if (rec.status === 'LATE') totalLate++;
+      else if (rec.status === 'HALF_DAY') totalHalfDay++;
+      else if (rec.status === 'LEAVE') totalLeave++;
+
+      if (rec.workingHours) {
+        totalHoursLogged += Number(rec.workingHours);
       }
     });
 
-    const avgHours = completedDays > 0 ? (totalHours / completedDays).toFixed(1) : '8.0';
-    const onTimeRate = totalDays > 0 ? Math.round((presentCount / totalDays) * 100) : 100;
+    // 4. Calculate Absents:
+    // Any past working day (Mon–Sat) in the month up to current day with no record is considered Absent
+    let totalAbsent = 0;
+    const isCurrentMonth = filterYear === istYear && filterMonth === istMonth;
+    const maxDayToCheck = isCurrentMonth ? istDay : lastDayOfMonth;
 
-    // If Admin/CEO, also return team summary for today
-    let teamToday: any[] = [];
-    if (sessionUser.role === 'ADMIN' || sessionUser.role === 'CEO') {
+    for (let day = 1; day <= maxDayToCheck; day++) {
+      const checkDateIST = new Date(filterYear, filterMonth - 1, day);
+      const dayOfWeek = checkDateIST.getDay(); // 0 is Sunday
+      const dateKey = `${filterYear}-${String(filterMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+      // Skip Sunday (SLS official weekly off)
+      if (dayOfWeek === 0) continue;
+
+      // If today is Sunday or today in progress, don't mark today as absent if shift hasn't ended
+      if (isCurrentMonth && day === istDay && !attendanceByDate[dateKey]) {
+        // Today is ongoing, not yet marked absent
+        continue;
+      }
+
+      if (!attendanceByDate[dateKey]) {
+        totalAbsent++;
+        // Add synthetic absent entry to calendar view for past days
+        attendanceByDate[dateKey] = {
+          date: checkDateIST,
+          status: 'ABSENT',
+          isAutoGenerated: true,
+        };
+      }
+    }
+
+    const actualPresentCount = totalPresent + totalLate + totalHalfDay;
+    const completedDays = monthRecords.filter((r) => r.workingHours).length;
+    const avgDailyHours = completedDays > 0 ? (totalHoursLogged / completedDays).toFixed(1) : '8.0';
+
+    // 5. Staff Attendance Record (Restricted to CEO & MD / ADMIN)
+    let staffAttendance: any[] = [];
+    const isExecutive = sessionUser.role === 'ADMIN' || sessionUser.role === 'CEO';
+
+    if (isExecutive) {
       const allUsers = await prisma.user.findMany({
         where: { isActive: true },
         select: {
@@ -75,32 +188,31 @@ export async function GET() {
         },
       });
 
-      const todayTeamAttendances = await prisma.attendance.findMany({
+      const todayAllAttendances = await prisma.attendance.findMany({
         where: {
-          date: {
-            gte: todayStart,
-            lte: todayEnd,
-          },
-        },
-        include: {
-          user: {
-            select: {
-              name: true,
-              username: true,
-              role: true,
-              designation: true,
+          OR: [
+            { punchOut: null },
+            {
+              punchIn: {
+                gte: todayStart,
+                lte: todayEnd,
+              },
             },
-          },
+          ],
         },
+        orderBy: { punchIn: 'desc' },
       });
 
-      const attendanceMap = new Map();
-      todayTeamAttendances.forEach((att) => {
-        attendanceMap.set(att.userId, att);
+      const staffMap = new Map();
+      todayAllAttendances.forEach((att) => {
+        // Keep the latest record for each user
+        if (!staffMap.has(att.userId)) {
+          staffMap.set(att.userId, att);
+        }
       });
 
-      teamToday = allUsers.map((u) => {
-        const att = attendanceMap.get(u.id);
+      staffAttendance = allUsers.map((u) => {
+        const att = staffMap.get(u.id);
         return {
           userId: u.id,
           name: u.name,
@@ -110,7 +222,7 @@ export async function GET() {
           status: att ? att.status : 'NOT_MARKED',
           punchIn: att?.punchIn || null,
           punchOut: att?.punchOut || null,
-          workingHours: att?.workingHours || null,
+          workingHours: att?.workingHours ? Number(att.workingHours) : null,
           plannedTasks: att?.plannedTasks || null,
           workDone: att?.workDone || null,
           workLocation: att?.workLocation || 'Office',
@@ -120,16 +232,22 @@ export async function GET() {
 
     return NextResponse.json({
       todayRecord,
-      history,
-      stats: {
-        totalDays,
-        presentCount,
-        lateCount,
-        halfDayCount,
-        avgHours,
-        onTimeRate,
+      calendar: {
+        year: filterYear,
+        month: filterMonth,
+        attendanceByDate,
       },
-      teamToday,
+      stats: {
+        totalPresent: actualPresentCount,
+        totalAbsent,
+        totalLeave,
+        totalLate,
+        totalHalfDay,
+        avgDailyHours,
+      },
+      history: monthRecords,
+      staffAttendance: isExecutive ? staffAttendance : null,
+      isExecutive,
     });
   } catch (error: any) {
     console.error('Error fetching attendance:', error);
@@ -145,39 +263,42 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { action, plannedTasks, workDone, workLocation, notes } = body; // action: 'PUNCH_IN' | 'PUNCH_OUT'
+    const { action, plannedTasks, workDone, workLocation, notes } = body;
     const now = new Date();
-    const { start: todayStart, end: todayEnd } = getDayBounds(now);
+    const { startUTC: todayStart, endUTC: todayEnd } = getISTDayBounds(now);
 
-    const existingRecord = await prisma.attendance.findFirst({
-      where: {
-        userId: sessionUser.id,
-        date: {
-          gte: todayStart,
-          lte: todayEnd,
-        },
-      },
-    });
-
+    // ==========================================
+    // ACTION: PUNCH_IN
+    // ==========================================
     if (action === 'PUNCH_IN') {
-      if (existingRecord) {
+      // 1. Check if user already has an active open shift
+      const activeShift = await prisma.attendance.findFirst({
+        where: {
+          userId: sessionUser.id,
+          punchOut: null,
+        },
+      });
+
+      if (activeShift) {
         return NextResponse.json(
-          { error: 'You have already punched in for today.' },
+          { error: 'You already have an active shift in progress. Please punch out first before starting a new shift.' },
           { status: 400 }
         );
       }
 
+      // 2. Validate tasks for the day (Mandatory)
       if (!plannedTasks || !plannedTasks.trim() || plannedTasks.trim().length < 5) {
         return NextResponse.json(
-          { error: 'Please enter your tasks / objectives for the day before punching in (minimum 5 characters).' },
+          { error: 'Please enter your planned tasks / goals for the day before punching in (minimum 5 characters).' },
           { status: 400 }
         );
       }
 
-      // Check time in IST (UTC+5:30)
-      const istHours = (now.getUTCHours() + 5 + Math.floor((now.getUTCMinutes() + 30) / 60)) % 24;
-      const istMinutes = (now.getUTCMinutes() + 30) % 60;
-      // Late if after 10:15 AM IST
+      // 3. Compute punctuality in IST (UTC+5:30)
+      const istNow = getISTDate(now);
+      const istHours = istNow.getHours();
+      const istMinutes = istNow.getMinutes();
+      // Late after 10:15 AM IST
       const isLate = istHours > 10 || (istHours === 10 && istMinutes > 15);
 
       const newRecord = await prisma.attendance.create({
@@ -188,67 +309,100 @@ export async function POST(req: Request) {
           status: isLate ? 'LATE' : 'PRESENT',
           plannedTasks: plannedTasks.trim(),
           workLocation: workLocation || 'Office',
-          notes: notes || null,
+          notes: notes?.trim() || null,
         },
       });
 
       return NextResponse.json({
         success: true,
-        message: isLate ? 'Punched in (Marked Late - after 10:15 AM IST). Planned tasks saved.' : 'Punched in successfully on time! Have a productive day.',
+        message: isLate
+          ? 'Punched in (Marked Late — after 10:15 AM IST). Tasks for the day recorded.'
+          : 'Punched in successfully on time! Have a productive day.',
         attendance: newRecord,
       });
     }
 
+    // ==========================================
+    // ACTION: PUNCH_OUT
+    // ==========================================
     if (action === 'PUNCH_OUT') {
-      if (!existingRecord) {
-        return NextResponse.json(
-          { error: 'You have not punched in today yet.' },
-          { status: 400 }
-        );
+      // 1. Find user's active open shift (100% bulletproof: punchOut IS null)
+      let activeRecord = await prisma.attendance.findFirst({
+        where: {
+          userId: sessionUser.id,
+          punchOut: null,
+        },
+        orderBy: { punchIn: 'desc' },
+      });
+
+      if (!activeRecord) {
+        // Fallback: check if punched in today
+        activeRecord = await prisma.attendance.findFirst({
+          where: {
+            userId: sessionUser.id,
+            punchIn: {
+              gte: todayStart,
+              lte: todayEnd,
+            },
+          },
+          orderBy: { punchIn: 'desc' },
+        });
+
+        if (!activeRecord) {
+          return NextResponse.json(
+            { error: 'No active punch-in record found for today. Please punch in first.' },
+            { status: 400 }
+          );
+        }
+
+        if (activeRecord.punchOut) {
+          return NextResponse.json(
+            { error: 'You have already punched out of today\'s shift.' },
+            { status: 400 }
+          );
+        }
       }
 
-      if (existingRecord.punchOut) {
-        return NextResponse.json(
-          { error: 'You have already punched out today.' },
-          { status: 400 }
-        );
-      }
-
+      // 2. Validate work done (Mandatory)
       if (!workDone || !workDone.trim() || workDone.trim().length < 5) {
         return NextResponse.json(
-          { error: 'Please enter your work summary / tasks completed today before punching out (minimum 5 characters).' },
+          { error: 'Please enter your work done / daily report before punching out (minimum 5 characters).' },
           { status: 400 }
         );
       }
 
-      // Calculate working hours automatically from system timestamp
-      const diffMs = now.getTime() - new Date(existingRecord.punchIn).getTime();
-      const hours = Math.max(0.1, Number((diffMs / (1000 * 60 * 60)).toFixed(2)));
+      // 3. Calculate working hours automatically from system timestamp
+      const punchInMs = new Date(activeRecord.punchIn).getTime();
+      const punchOutMs = now.getTime();
+      const diffMs = Math.max(0, punchOutMs - punchInMs);
+      const hours = Math.max(0.01, Number((diffMs / (1000 * 60 * 60)).toFixed(2)));
 
-      let status = existingRecord.status;
+      let status = activeRecord.status;
       if (hours < 4.5 && status !== 'LATE') {
         status = 'HALF_DAY';
       }
 
       const updated = await prisma.attendance.update({
-        where: { id: existingRecord.id },
+        where: { id: activeRecord.id },
         data: {
           punchOut: now,
           workingHours: hours,
           workDone: workDone.trim(),
           status,
-          notes: notes ? `${existingRecord.notes ? existingRecord.notes + ' | ' : ''}${notes}` : existingRecord.notes,
+          notes: notes?.trim()
+            ? `${activeRecord.notes ? activeRecord.notes + ' | ' : ''}${notes.trim()}`
+            : activeRecord.notes,
         },
       });
 
       return NextResponse.json({
         success: true,
-        message: `Punched out successfully. Total shift duration: ${hours} hours. Daily work report submitted.`,
+        message: `Punched out successfully! Shift Duration: ${hours} hrs. Work summary saved.`,
         attendance: updated,
       });
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid action specified' }, { status: 400 });
   } catch (error: any) {
     console.error('Error processing attendance action:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
