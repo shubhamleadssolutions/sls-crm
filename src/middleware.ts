@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
 
-export function middleware(request: NextRequest) {
+const SECRET_KEY = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'sls_crm_super_secret_jwt_key_2026_shubham_leads'
+);
+
+export async function middleware(request: NextRequest) {
   const token = request.cookies.get('sls_token')?.value;
   const { pathname } = request.nextUrl;
 
@@ -32,6 +37,41 @@ export function middleware(request: NextRequest) {
     }
     const loginUrl = new URL('/login', request.url);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Role-Based Route Access Control
+  if (token) {
+    try {
+      const { payload } = await jwtVerify(token, SECRET_KEY);
+      const role = (payload as any)?.role;
+
+      // 1. Invoices & Billing: CEO and MD (ADMIN) only
+      if (pathname.startsWith('/billing')) {
+        if (role !== 'ADMIN' && role !== 'CEO') {
+          return NextResponse.redirect(new URL('/', request.url));
+        }
+      }
+
+      // 2. Business Reports: CEO and MD (ADMIN) only
+      if (pathname.startsWith('/reports')) {
+        if (role !== 'ADMIN' && role !== 'CEO') {
+          return NextResponse.redirect(new URL('/', request.url));
+        }
+      }
+
+      // 3. User Management: CEO, MD (ADMIN), and IT Manager (IT_ADMIN) only
+      if (pathname.startsWith('/settings/users')) {
+        if (role !== 'ADMIN' && role !== 'CEO' && role !== 'IT_ADMIN') {
+          return NextResponse.redirect(new URL('/', request.url));
+        }
+      }
+    } catch {
+      // Invalid or expired token
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
   }
 
   return NextResponse.next();

@@ -12,6 +12,13 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (user.role !== 'ADMIN' && user.role !== 'CEO') {
+      return NextResponse.json(
+        { error: 'Forbidden: Inventory is restricted to CEO and MD only' },
+        { status: 403 }
+      );
+    }
+
     await prisma.inventoryItem.update({
       where: { id: params.id },
       data: { isActive: false },
@@ -32,6 +39,13 @@ export async function PUT(
     const user = await getSessionUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (user.role !== 'ADMIN' && user.role !== 'CEO') {
+      return NextResponse.json(
+        { error: 'Forbidden: Inventory is restricted to CEO and MD only' },
+        { status: 403 }
+      );
     }
 
     const body = await req.json();

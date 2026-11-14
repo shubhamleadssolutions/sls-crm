@@ -10,6 +10,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (user.role !== 'ADMIN' && user.role !== 'CEO') {
+      return NextResponse.json(
+        { error: 'Forbidden: Invoices and Billing are restricted to CEO and MD only' },
+        { status: 403 }
+      );
+    }
+
     const invoice = await prisma.invoice.findUnique({
       where: { id: params.id },
       include: {
@@ -34,6 +41,13 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const user = await getSessionUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (user.role !== 'ADMIN' && user.role !== 'CEO') {
+      return NextResponse.json(
+        { error: 'Forbidden: Invoices and Billing are restricted to CEO and MD only' },
+        { status: 403 }
+      );
     }
 
     const existing = await prisma.invoice.findUnique({

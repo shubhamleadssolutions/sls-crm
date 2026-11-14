@@ -58,6 +58,7 @@ interface InventoryItem {
 
 export default function BillingPage() {
   const [activeTab, setActiveTab] = useState<'invoices' | 'inventory'>('invoices');
+  const [accessDenied, setAccessDenied] = useState(false);
 
   // Invoices State
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -88,6 +89,10 @@ export default function BillingPage() {
       if (searchTerm) params.set('search', searchTerm);
 
       const res = await fetch(`/api/invoices?${params.toString()}`);
+      if (res.status === 403) {
+        setAccessDenied(true);
+        return;
+      }
       const data = await res.json();
       const list = data.invoices || [];
       setInvoices(list);
@@ -168,6 +173,28 @@ export default function BillingPage() {
 
   // Distinct client count
   const uniqueClientsCount = new Set(invoices.map((inv) => inv.clientName)).size;
+
+  if (accessDenied) {
+    return (
+      <AppLayout>
+        <div className="bg-white rounded-3xl p-10 border border-slate-200/90 text-center max-w-md mx-auto my-12 space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+            <ReceiptText className="w-6 h-6" />
+          </div>
+          <h2 className="text-base font-bold text-slate-900">Access Restricted</h2>
+          <p className="text-xs text-slate-500">
+            Invoices and Billing are restricted to CEO and MD only.
+          </p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition"
+          >
+            Back to Dashboard
+          </Link>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

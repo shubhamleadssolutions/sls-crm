@@ -9,6 +9,14 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Access check: Restricted to CEO & MD (ADMIN) only
+    if (user.role !== 'ADMIN' && user.role !== 'CEO') {
+      return NextResponse.json(
+        { error: 'Forbidden: Business reports are restricted to CEO and MD only' },
+        { status: 403 }
+      );
+    }
+
     const [
       totalProspects,
       wonProspects,

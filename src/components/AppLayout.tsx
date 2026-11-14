@@ -96,6 +96,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     window.location.href = '/login';
   };
 
+  const isExecutive = user ? (user.role === 'ADMIN' || user.role === 'CEO') : false;
+  const canManageUsers = user ? (user.role === 'ADMIN' || user.role === 'CEO' || user.role === 'IT_ADMIN') : false;
+
   const navSections = [
     {
       title: 'Prospect & Sales Funnel',
@@ -107,7 +110,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         { label: 'Follow-up Tracker', href: '/follow-ups', icon: CalendarClock },
         { label: 'Meetings', href: '/meetings', icon: Video },
         { label: 'Proposals', href: '/proposals', icon: FileText },
-        { label: 'Invoices & Billing', href: '/billing', icon: ReceiptText },
+        ...(isExecutive ? [{ label: 'Invoices & Billing', href: '/billing', icon: ReceiptText }] : []),
         { label: 'Active Clients', href: '/clients', icon: Briefcase },
       ],
     },
@@ -123,7 +126,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     {
       title: 'Analytics & Tools',
       items: [
-        { label: 'Business Reports', href: '/reports', icon: BarChart3 },
+        ...(isExecutive ? [{ label: 'Business Reports', href: '/reports', icon: BarChart3 }] : []),
         { label: 'Outreach Templates', href: '/templates', icon: MessageSquare },
       ],
     },
@@ -150,7 +153,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const isExecutive = user.role === 'ADMIN' || user.role === 'CEO';
   const userInitials = user.name
     ? user.name
         .split(' ')
@@ -218,8 +220,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           ))}
 
-          {/* Admin User Management in Sidebar */}
-          {isExecutive && (
+          {/* User Management in Sidebar (CEO, MD, IT Manager) */}
+          {canManageUsers && (
             <div className="pt-2 border-t border-slate-100 space-y-1">
               <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Administration
@@ -392,7 +394,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       <span>My Profile</span>
                     </Link>
 
-                    {isExecutive && (
+                    {canManageUsers && (
                       <Link
                         href="/settings/users"
                         onClick={() => setProfileDropdownOpen(false)}
@@ -528,8 +530,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
               ))}
 
-              {/* Administration - Full parity with desktop sidebar */}
-              {isExecutive && (
+              {/* Administration - Full parity with desktop sidebar (CEO, MD, IT Manager) */}
+              {canManageUsers && (
                 <div className="pt-2 border-t border-slate-100 space-y-1">
                   <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     Administration

@@ -30,6 +30,7 @@ function NewInvoiceForm() {
   const [inventoryList, setInventoryList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [accessDenied, setAccessDenied] = useState(false);
 
   // Form State
   const [selectedClientId, setSelectedClientId] = useState(initialClientId);
@@ -62,6 +63,15 @@ function NewInvoiceForm() {
   );
 
   useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user && data.user.role !== 'ADMIN' && data.user.role !== 'CEO') {
+          setAccessDenied(true);
+        }
+      })
+      .catch(console.error);
+
     fetch('/api/clients')
       .then((res) => res.json())
       .then((data) => {
@@ -214,6 +224,26 @@ function NewInvoiceForm() {
       setLoading(false);
     }
   };
+
+  if (accessDenied) {
+    return (
+      <div className="bg-white rounded-3xl p-10 border border-slate-200/90 text-center max-w-md mx-auto my-12 space-y-4">
+        <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+          <ReceiptText className="w-6 h-6" />
+        </div>
+        <h2 className="text-base font-bold text-slate-900">Access Restricted</h2>
+        <p className="text-xs text-slate-500">
+          Invoices and Billing are restricted to CEO and MD only.
+        </p>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition"
+        >
+          Back to Dashboard
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">

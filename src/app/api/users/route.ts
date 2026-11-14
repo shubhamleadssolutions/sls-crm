@@ -2,11 +2,21 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionUser, hashPassword } from '@/lib/auth';
 
+const CAN_MANAGE_USERS = ['ADMIN', 'CEO', 'IT_ADMIN'];
+
 export async function GET() {
   try {
     const user = await getSessionUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Role check: Only CEO, MD (ADMIN), and IT Manager (IT_ADMIN) can view user management
+    if (!CAN_MANAGE_USERS.includes(user.role)) {
+      return NextResponse.json(
+        { error: 'Forbidden: User management is restricted to CEO, MD, and IT Manager' },
+        { status: 403 }
+      );
     }
 
     const users = await prisma.user.findMany({
@@ -40,9 +50,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Role check: Only ADMIN or CEO can create users
-    if (sessionUser.role !== 'ADMIN' && sessionUser.role !== 'CEO') {
-      return NextResponse.json({ error: 'Permission denied: Only Admin or CEO can create users' }, { status: 403 });
+    // Role check: Only CEO, MD (ADMIN), and IT Manager (IT_ADMIN) can create users
+    if (!CAN_MANAGE_USERS.includes(sessionUser.role)) {
+      return NextResponse.json(
+        { error: 'Permission denied: User management is restricted to CEO, MD, and IT Manager' },
+        { status: 403 }
+      );
     }
 
     const body = await req.json();

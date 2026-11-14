@@ -229,6 +229,28 @@ export default function UserManagementPage() {
     }
   };
 
+  if (!loading && currentUser && !['ADMIN', 'CEO', 'IT_ADMIN'].includes(currentUser.role)) {
+    return (
+      <AppLayout>
+        <div className="bg-white rounded-3xl p-10 border border-slate-200/90 text-center max-w-md mx-auto my-12 space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <h2 className="text-base font-bold text-slate-900">Access Restricted</h2>
+          <p className="text-xs text-slate-500">
+            User Management is restricted to CEO, MD, and IT Manager only.
+          </p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition"
+          >
+            Back to Dashboard
+          </Link>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="space-y-6 animate-fade-in">

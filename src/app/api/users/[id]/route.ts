@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionUser, hashPassword } from '@/lib/auth';
 
+const CAN_MANAGE_USERS = ['ADMIN', 'CEO', 'IT_ADMIN'];
+
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
     const sessionUser = await getSessionUser();
-    if (!sessionUser || (sessionUser.role !== 'ADMIN' && sessionUser.role !== 'CEO')) {
-      return NextResponse.json({ error: 'Permission denied: Admin or CEO only' }, { status: 403 });
+    if (!sessionUser || !CAN_MANAGE_USERS.includes(sessionUser.role)) {
+      return NextResponse.json({ error: 'Permission denied: User management is restricted to CEO, MD, and IT Manager' }, { status: 403 });
     }
 
     const body = await req.json();
@@ -64,8 +66,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
     const sessionUser = await getSessionUser();
-    if (!sessionUser || (sessionUser.role !== 'ADMIN' && sessionUser.role !== 'CEO')) {
-      return NextResponse.json({ error: 'Permission denied: Admin or CEO only' }, { status: 403 });
+    if (!sessionUser || !CAN_MANAGE_USERS.includes(sessionUser.role)) {
+      return NextResponse.json({ error: 'Permission denied: User management is restricted to CEO, MD, and IT Manager' }, { status: 403 });
     }
 
     // Protection: Cannot delete your own account

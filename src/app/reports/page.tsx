@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
+import Link from 'next/link';
 import {
   BarChart3,
   TrendingUp,
@@ -71,6 +72,28 @@ export default function ReportsPage() {
   const pipelineStages = data?.pipelineStages || [];
   const totalStageCount = pipelineStages.reduce((acc: number, s: any) => acc + s.count, 0) || 1;
   const totalSourceCount = sources.reduce((acc: number, s: any) => acc + s.count, 0) || 1;
+
+  if (!loading && data?.error) {
+    return (
+      <AppLayout>
+        <div className="bg-white rounded-3xl p-10 border border-slate-200/90 text-center max-w-md mx-auto my-12 space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+            <BarChart3 className="w-6 h-6" />
+          </div>
+          <h2 className="text-base font-bold text-slate-900">Access Restricted</h2>
+          <p className="text-xs text-slate-500">
+            Business Reports are accessible to CEO and MD only.
+          </p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition"
+          >
+            Back to Dashboard
+          </Link>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

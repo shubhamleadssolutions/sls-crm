@@ -76,14 +76,16 @@ export default function InvoiceDetailPage({ params }: { params: { id: string } }
       <AppLayout>
         <div className="max-w-xl mx-auto my-12 bg-white rounded-3xl p-8 border border-slate-200 text-center space-y-4 shadow-xs">
           <AlertTriangle className="w-8 h-8 text-rose-500 mx-auto" />
-          <h2 className="text-lg font-bold text-slate-800">Invoice Not Found</h2>
+          <h2 className="text-lg font-bold text-slate-800">
+            {error.includes('Forbidden') ? 'Access Restricted' : 'Invoice Not Found'}
+          </h2>
           <p className="text-xs text-slate-500">{error || 'This invoice does not exist or has been removed.'}</p>
           <Link
-            href="/billing"
+            href="/"
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Billing
+            Back to Dashboard
           </Link>
         </div>
       </AppLayout>
