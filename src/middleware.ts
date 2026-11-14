@@ -1,12 +1,19 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
 
-const SECRET_KEY = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'sls_crm_super_secret_jwt_key_2026_shubham_leads'
-);
+function parseJwtPayload(token: string): { role?: string; exp?: number } | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const json = atob(base64);
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const token = request.cookies.get('sls_token')?.value;
   const { pathname } = request.nextUrl;
 
@@ -25,13 +32,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // If already logged in and visiting /login, redirect to /
-  if (token && pathname === '/login') {
-    return NextResponse.redirect(new URL('/', request.url));
+  // If visiting /login:
+  // If the user already has an active, unexpired token, redirect to /
+  if (pathname === '/login') {
+    if (token) {
+      const payload = parseJwtPayload(token);
+      if (payload && payload.exp && payload.exp * 1000 > Date.now()) {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+    }
+    return NextResponse.next();
   }
 
-  // If not logged in and not on /login or /api/auth routes, redirect to /login
-  if (!token && pathname !== '/login') {
+  // If not logged in and not on /login, redirect to /login
+  if (!token) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -39,38 +53,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Role-Based Route Access Control
-  if (token) {
-    try {
-      const { payload } = await jwtVerify(token, SECRET_KEY);
-      const role = (payload as any)?.role;
+  // Role-Based Route Access Control (Fast Edge Filtering)
+  const payload = parseJwtPayload(token);
+  const role = payload?.role;
 
-      // 1. Invoices & Billing: CEO and MD (ADMIN) only
-      if (pathname.startsWith('/billing')) {
-        if (role !== 'ADMIN' && role !== 'CEO') {
-          return NextResponse.redirect(new URL('/', request.url));
-        }
-      }
+  // 1. Invoices & Billing: CEO and MD (ADMIN) only
+  if (pathname.startsWith('/billing')) {
+    if (role && role !== 'ADMIN' && role !== 'CEO') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
 
-      // 2. Business Reports: CEO and MD (ADMIN) only
-      if (pathname.startsWith('/reports')) {
-        if (role !== 'ADMIN' && role !== 'CEO') {
-          return NextResponse.redirect(new URL('/', request.url));
-        }
-      }
+  // 2. Business Reports: CEO and MD (ADMIN) only
+  if (pathname.startsWith('/reports')) {
+    if (role && role !== 'ADMIN' && role !== 'CEO') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
 
-      // 3. User Management: CEO, MD (ADMIN), and IT Manager (IT_ADMIN) only
-      if (pathname.startsWith('/settings/users')) {
-        if (role !== 'ADMIN' && role !== 'CEO' && role !== 'IT_ADMIN') {
-          return NextResponse.redirect(new URL('/', request.url));
-        }
-      }
-    } catch {
-      // Invalid or expired token
-      if (pathname.startsWith('/api/')) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-      return NextResponse.redirect(new URL('/login', request.url));
+  // 3. User Management: CEO, MD (ADMIN), and IT Manager (IT_ADMIN) only
+  if (pathname.startsWith('/settings/users')) {
+    if (role && role !== 'ADMIN' && role !== 'CEO' && role !== 'IT_ADMIN') {
+      return NextResponse.redirect(new URL('/', request.url));
     }
   }
 
@@ -79,12 +83,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
