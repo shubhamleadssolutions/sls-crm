@@ -248,7 +248,7 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
         </div>
 
         {/* Prospect Header Card */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs p-6">
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs p-4 sm:p-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <div className="flex flex-wrap items-center gap-3">
@@ -295,46 +295,46 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
             </div>
 
             {/* Quick Actions (Section 23 of PDF) */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <button
                 onClick={() => setShowWhatsAppModal(true)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs active:scale-[0.99]"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs active:scale-[0.99] cursor-pointer"
               >
-                <MessageCircle className="w-4 h-4" />
-                Send WhatsApp
+                <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span>Send WhatsApp</span>
               </button>
 
               <button
                 onClick={() => setShowActivityModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5" />
-                Add Activity
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span>Add Activity</span>
               </button>
 
               <button
                 onClick={() => setShowFollowUpModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer"
               >
-                <Calendar className="w-3.5 h-3.5" />
-                Follow-up
+                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span>Follow-up</span>
               </button>
 
               <button
                 onClick={() => setShowNoteModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer"
               >
-                <FileText className="w-3.5 h-3.5" />
-                Add Note
+                <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span>Add Note</span>
               </button>
 
               {!prospect.client && (
                 <button
                   onClick={() => setShowConvertModal(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs active:scale-[0.99]"
+                  className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs active:scale-[0.99] cursor-pointer"
                 >
-                  <Trophy className="w-3.5 h-3.5" />
-                  Convert to Client
+                  <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span>Convert to Client</span>
                 </button>
               )}
             </div>

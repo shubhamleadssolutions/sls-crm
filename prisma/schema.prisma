@@ -123,6 +123,7 @@ model User {
   invoicesCreated   Invoice[]
   auditLogs         AuditLog[]
   chatMessages      ChatMessage[]
+  attendances       Attendance[]
 
   @@map("users")
 }
@@ -485,4 +486,22 @@ model ChatMessage {
   @@index([channel])
   @@index([createdAt])
   @@map("chat_messages")
+}
+
+model Attendance {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date         DateTime  @default(now())
+  punchIn      DateTime  @default(now())
+  punchOut     DateTime?
+  status       String    @default("PRESENT") // PRESENT, LATE, HALF_DAY
+  notes        String?
+  workingHours Decimal?  @db.Decimal(5, 2)
+  ipAddress    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId, date])
+  @@map("attendances")
 }

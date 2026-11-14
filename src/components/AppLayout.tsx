@@ -27,12 +27,12 @@ import {
   ChevronDown,
   User as UserIcon,
   Shield,
-  Mail,
   Phone,
   CheckCircle2,
   Trophy,
   Video,
   MessagesSquare,
+  Clock,
 } from 'lucide-react';
 
 interface User {
@@ -52,32 +52,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [userProgress, setUserProgress] = useState<{
-    rank: number;
-    totalTeam: number;
-    wonCount: number;
-    winRate: number;
-    activeDeals: number;
-    activitiesCount: number;
-    badge: string;
-  } | null>(null);
 
   const profileRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (showProfileModal && !userProgress) {
-      fetch('/api/user/progress')
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (data?.progress) {
-            setUserProgress(data.progress);
-          }
-        })
-        .catch((err) => console.error(err));
-    }
-  }, [showProfileModal, userProgress]);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -137,6 +114,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     {
       title: 'Collaboration & Outreach',
       items: [
+        { label: 'Attendance', href: '/attendance', icon: Clock },
         { label: 'Team Chat', href: '/chat', icon: MessagesSquare },
         { label: 'Ad Campaigns', href: '/campaigns', icon: Megaphone },
         { label: 'Student Leads', href: '/student-leads', icon: GraduationCap },
@@ -269,7 +247,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Sidebar Footer with quick profile indicator */}
         <div className="p-3 border-t border-slate-100 shrink-0">
           <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100">
-            <div className="flex items-center gap-2 min-w-0">
+            <Link
+              href="/profile"
+              className="flex items-center gap-2 min-w-0 flex-1 hover:opacity-80 transition cursor-pointer"
+              title="View & Edit My Profile"
+            >
               <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
                 {userInitials}
               </div>
@@ -277,7 +259,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <p className="text-xs font-bold text-slate-900 truncate leading-tight">{user.name}</p>
                 <p className="text-[10px] text-slate-500 truncate mt-0.5">{user.designation || user.role}</p>
               </div>
-            </div>
+            </Link>
             <button
               onClick={() => setShowLogoutModal(true)}
               title="Sign Out"
@@ -325,6 +307,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   ? 'Dashboard'
                   : pathname.startsWith('/prospects')
                   ? 'Prospects & Sales Pipeline'
+                  : pathname.startsWith('/attendance')
+                  ? 'Attendance & Workforce'
+                  : pathname.startsWith('/profile')
+                  ? 'My Executive Profile'
                   : pathname.startsWith('/follow-ups')
                   ? 'Follow-up Tracker'
                   : pathname.startsWith('/meetings')
@@ -397,16 +383,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
                   {/* Dropdown Options */}
                   <div className="space-y-1">
-                    <button
-                      onClick={() => {
-                        setProfileDropdownOpen(false);
-                        setShowProfileModal(true);
-                      }}
+                    <Link
+                      href="/profile"
+                      onClick={() => setProfileDropdownOpen(false)}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition cursor-pointer text-left"
                     >
                       <UserIcon className="w-4 h-4 text-blue-600" />
                       <span>My Profile</span>
-                    </button>
+                    </Link>
 
                     {isExecutive && (
                       <Link
@@ -439,7 +423,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Right Main Content Area - Independent Smooth Scroll with mobile bottom padding */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-7xl mx-auto w-full animate-fade-in">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 pb-28 lg:pb-8 max-w-7xl mx-auto w-full animate-fade-in min-w-0">
           {children}
         </main>
       </div>
@@ -490,15 +474,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     <span className="text-[9px] font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
                       {user.role}
                     </span>
-                    <button
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        setShowProfileModal(true);
-                      }}
+                    <Link
+                      href="/profile"
+                      onClick={() => setMobileMenuOpen(false)}
                       className="text-[10px] text-blue-600 font-bold hover:underline"
                     >
                       View Profile
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -651,125 +633,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <span className="text-[10px]">More</span>
         </button>
       </nav>
-
-      {/* My Profile Modal */}
-      {showProfileModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-md w-full p-6 space-y-5 animate-scale-in">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-                  <UserIcon className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">User Profile</h3>
-                  <p className="text-[11px] text-slate-500">Authorized CRM account credentials</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowProfileModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 text-xs font-bold"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Profile Avatar Card */}
-            <div className="flex items-center gap-3.5 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-base shadow-xs shrink-0">
-                {userInitials}
-              </div>
-              <div>
-                <h4 className="text-sm font-black text-slate-900">{user.name}</h4>
-                <p className="text-xs text-blue-600 font-semibold">{user.designation || 'Executive'}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
-                    Role: {user.role}
-                  </span>
-                  <span className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Active
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Profile Field Details (Zero email references for company privacy) */}
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-slate-500 font-medium">Username</span>
-                <span className="font-mono font-bold text-slate-900">@{user.username}</span>
-              </div>
-
-              {user.phone && (
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <span className="text-slate-500 font-medium">Contact Phone</span>
-                  <span className="font-semibold text-slate-900">{user.phone}</span>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                <span className="text-slate-500 font-medium">Access Level</span>
-                <span className="font-bold text-slate-900 flex items-center gap-1">
-                  <Shield className="w-3.5 h-3.5 text-blue-600" />
-                  {isExecutive ? 'Full Executive Administrator' : user.role}
-                </span>
-              </div>
-            </div>
-
-            {/* Individual Employee Performance & Progress (visible only here in Profile) */}
-            {userProgress && (
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white space-y-3 shadow-md">
-                <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <Trophy className="w-4 h-4 text-amber-300" />
-                    <span className="text-xs font-bold text-white">My CRM Progress</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                      {userProgress.badge}
-                    </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white">
-                      Rank #{userProgress.rank}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-center">
-                  <div className="bg-white/5 p-2 rounded-xl border border-white/10">
-                    <p className="text-[10px] uppercase font-bold text-slate-400">Deals Won</p>
-                    <p className="text-lg font-black text-emerald-400">{userProgress.wonCount}</p>
-                    <p className="text-[9px] text-slate-400">Closed clients</p>
-                  </div>
-                  <div className="bg-white/5 p-2 rounded-xl border border-white/10">
-                    <p className="text-[10px] uppercase font-bold text-slate-400">Win Rate</p>
-                    <p className="text-lg font-black text-sky-400">{userProgress.winRate}%</p>
-                    <p className="text-[9px] text-slate-400">Conversion</p>
-                  </div>
-                  <div className="bg-white/5 p-2 rounded-xl border border-white/10">
-                    <p className="text-[10px] uppercase font-bold text-slate-400">Active Deals</p>
-                    <p className="text-lg font-black text-blue-400">{userProgress.activeDeals}</p>
-                    <p className="text-[9px] text-slate-400">In negotiation</p>
-                  </div>
-                  <div className="bg-white/5 p-2 rounded-xl border border-white/10">
-                    <p className="text-[10px] uppercase font-bold text-slate-400">Total Actions</p>
-                    <p className="text-lg font-black text-purple-400">{userProgress.activitiesCount}</p>
-                    <p className="text-[9px] text-slate-400">Outreach &amp; touchpoints</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-end">
-              <button
-                onClick={() => setShowProfileModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
