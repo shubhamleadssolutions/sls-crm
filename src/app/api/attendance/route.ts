@@ -12,17 +12,61 @@ function getISTDate(date = new Date()) {
 function getISTDayBounds(targetDate = new Date()) {
   const ist = getISTDate(targetDate);
   
-  // Year, month, day in IST
   const y = ist.getFullYear();
   const m = ist.getMonth();
   const d = ist.getDate();
 
-  // 00:00:00 IST in UTC is previous day 18:30:00 UTC
   const startUTC = new Date(Date.UTC(y, m, d, 0, 0, 0, 0) - 3600000 * 5.5);
-  // 23:59:59.999 IST in UTC
   const endUTC = new Date(Date.UTC(y, m, d, 23, 59, 59, 999) - 3600000 * 5.5);
 
   return { startUTC, endUTC, istYear: y, istMonth: m + 1, istDay: d };
+}
+
+// Official SLS Team Shift Timings per role
+function getShiftConfigForRole(role: string) {
+  switch (role) {
+    case 'ADMIN':
+    case 'CEO':
+      return {
+        roleGroup: 'CEO & Managing Director',
+        shiftStart: '4:00 PM',
+        shiftEnd: '9:00 PM',
+        startHour: 16, // 4 PM IST
+        startMinute: 0,
+        endHour: 21,   // 9 PM IST
+        endMinute: 0,
+        graceMinute: 15, // Grace period until 4:15 PM
+        targetHours: 5.0,
+        halfDayThreshold: 2.5,
+      };
+    case 'IT_ADMIN':
+    case 'ACCOUNT_MANAGER':
+      return {
+        roleGroup: 'IT Manager & Account Manager',
+        shiftStart: '2:00 PM',
+        shiftEnd: '8:00 PM',
+        startHour: 14, // 2 PM IST
+        startMinute: 0,
+        endHour: 20,   // 8 PM IST
+        endMinute: 0,
+        graceMinute: 15, // Grace period until 2:15 PM
+        targetHours: 6.0,
+        halfDayThreshold: 3.5,
+      };
+    default:
+      return {
+        roleGroup: 'Staff (BD, Sales, Marketing)',
+        shiftStart: '12:00 PM',
+        shiftEnd: '8:00 PM',
+        startHour: 12, // 12 PM IST
+        startMinute: 0,
+        endHour: 20,   // 8 PM IST
+        endMinute: 0,
+        graceMinute: 15, // Grace period until 12:15 PM
+        targetHours: 8.0,
+        halfDayThreshold: 4.5,
+      };
+  }
 }
 
 export async function GET(req: Request) {
@@ -35,6 +79,8 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const now = new Date();
     const { startUTC: todayStart, endUTC: todayEnd, istYear, istMonth, istDay } = getISTDayBounds(now);
+
+    const shiftConfig = getShiftConfigForRole(sessionUser.role);
 
     // Optional month query: e.g. "2026-11"
     const monthQuery = searchParams.get('month'); // YYYY-MM
@@ -51,13 +97,11 @@ export async function GET(req: Request) {
       }
     }
 
-    // Month start and end in IST converted to UTC
     const monthStartUTC = new Date(Date.UTC(filterYear, filterMonth - 1, 1, 0, 0, 0, 0) - 3600000 * 5.5);
     const lastDayOfMonth = new Date(filterYear, filterMonth, 0).getDate();
     const monthEndUTC = new Date(Date.UTC(filterYear, filterMonth - 1, lastDayOfMonth, 23, 59, 59, 999) - 3600000 * 5.5);
 
-    // 1. Fetch Today's Shift for Current User:
-    // First, check if there is an active open shift (punchOut === null)
+    // 1. Fetch Today's Shift for Current User (active open shift first)
     let todayRecord = await prisma.attendance.findFirst({
       where: {
         userId: sessionUser.id,
@@ -66,7 +110,6 @@ export async function GET(req: Request) {
       orderBy: { punchIn: 'desc' },
     });
 
-    // If no active open shift, check if they completed a shift today
     if (!todayRecord) {
       todayRecord = await prisma.attendance.findFirst({
         where: {
@@ -90,7 +133,7 @@ export async function GET(req: Request) {
       });
     }
 
-    // 2. Fetch User's Attendance for the Selected Month (for Calendar Grid & Stats)
+    // 2. Fetch User's Attendance for the Selected Month
     const monthRecords = await prisma.attendance.findMany({
       where: {
         userId: sessionUser.id,
@@ -102,8 +145,7 @@ export async function GET(req: Request) {
       orderBy: { punchIn: 'asc' },
     });
 
-    // 3. Compute Calendar-Wise Attendance Map and Counts
-    // Map of date string "YYYY-MM-DD" -> Record
+    // 3. Compute Calendar-Wise Attendance Map
     const attendanceByDate: Record<string, any> = {};
     let totalPresent = 0;
     let totalLate = 0;
@@ -120,7 +162,7 @@ export async function GET(req: Request) {
         date: rec.date,
         punchIn: rec.punchIn,
         punchOut: rec.punchOut,
-        status: rec.status, // PRESENT, LATE, HALF_DAY, LEAVE, ABSENT
+        status: rec.status,
         plannedTasks: rec.plannedTasks,
         workDone: rec.workDone,
         workLocation: rec.workLocation,
@@ -138,7 +180,9 @@ export async function GET(req: Request) {
     });
 
     // 4. Calculate Absents:
-    // Any past working day (Mon–Sat) in the month up to current day with no record is considered Absent
+    // SLS team work officially begins on Monday, Nov 16, 2026.
+    // Days prior to Monday, Nov 16, 2026 are not counted as absent.
+    const officialTrackingStartDate = new Date(2026, 10, 16); // Monday, 16 Nov 2026
     let totalAbsent = 0;
     const isCurrentMonth = filterYear === istYear && filterMonth === istMonth;
     const maxDayToCheck = isCurrentMonth ? istDay : lastDayOfMonth;
@@ -151,15 +195,18 @@ export async function GET(req: Request) {
       // Skip Sunday (SLS official weekly off)
       if (dayOfWeek === 0) continue;
 
-      // If today is Sunday or today in progress, don't mark today as absent if shift hasn't ended
+      // Skip dates before official start from Monday (Nov 16, 2026)
+      if (checkDateIST < officialTrackingStartDate) {
+        continue;
+      }
+
+      // If today is ongoing, don't mark today as absent if shift hasn't ended
       if (isCurrentMonth && day === istDay && !attendanceByDate[dateKey]) {
-        // Today is ongoing, not yet marked absent
         continue;
       }
 
       if (!attendanceByDate[dateKey]) {
         totalAbsent++;
-        // Add synthetic absent entry to calendar view for past days
         attendanceByDate[dateKey] = {
           date: checkDateIST,
           status: 'ABSENT',
@@ -170,7 +217,7 @@ export async function GET(req: Request) {
 
     const actualPresentCount = totalPresent + totalLate + totalHalfDay;
     const completedDays = monthRecords.filter((r) => r.workingHours).length;
-    const avgDailyHours = completedDays > 0 ? (totalHoursLogged / completedDays).toFixed(1) : '8.0';
+    const avgDailyHours = completedDays > 0 ? (totalHoursLogged / completedDays).toFixed(1) : `${shiftConfig.targetHours}.0`;
 
     // 5. Staff Attendance Record (Restricted to CEO & MD / ADMIN)
     let staffAttendance: any[] = [];
@@ -205,7 +252,6 @@ export async function GET(req: Request) {
 
       const staffMap = new Map();
       todayAllAttendances.forEach((att) => {
-        // Keep the latest record for each user
         if (!staffMap.has(att.userId)) {
           staffMap.set(att.userId, att);
         }
@@ -213,12 +259,14 @@ export async function GET(req: Request) {
 
       staffAttendance = allUsers.map((u) => {
         const att = staffMap.get(u.id);
+        const userShift = getShiftConfigForRole(u.role);
         return {
           userId: u.id,
           name: u.name,
           username: u.username,
           role: u.role,
           designation: u.designation,
+          shiftTiming: `${userShift.shiftStart} – ${userShift.shiftEnd}`,
           status: att ? att.status : 'NOT_MARKED',
           punchIn: att?.punchIn || null,
           punchOut: att?.punchOut || null,
@@ -232,6 +280,8 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       todayRecord,
+      shiftConfig,
+      officialStartDate: 'Monday, Nov 16, 2026',
       calendar: {
         year: filterYear,
         month: filterMonth,
@@ -267,11 +317,12 @@ export async function POST(req: Request) {
     const now = new Date();
     const { startUTC: todayStart, endUTC: todayEnd } = getISTDayBounds(now);
 
+    const shiftConfig = getShiftConfigForRole(sessionUser.role);
+
     // ==========================================
     // ACTION: PUNCH_IN
     // ==========================================
     if (action === 'PUNCH_IN') {
-      // 1. Check if user already has an active open shift
       const activeShift = await prisma.attendance.findFirst({
         where: {
           userId: sessionUser.id,
@@ -286,7 +337,6 @@ export async function POST(req: Request) {
         );
       }
 
-      // 2. Validate tasks for the day (Mandatory)
       if (!plannedTasks || !plannedTasks.trim() || plannedTasks.trim().length < 5) {
         return NextResponse.json(
           { error: 'Please enter your planned tasks / goals for the day before punching in (minimum 5 characters).' },
@@ -294,12 +344,14 @@ export async function POST(req: Request) {
         );
       }
 
-      // 3. Compute punctuality in IST (UTC+5:30)
+      // Compute punctuality in IST based on the user's specific role timings
       const istNow = getISTDate(now);
       const istHours = istNow.getHours();
       const istMinutes = istNow.getMinutes();
-      // Late after 10:15 AM IST
-      const isLate = istHours > 10 || (istHours === 10 && istMinutes > 15);
+
+      const currentMinutesPastMidnight = istHours * 60 + istMinutes;
+      const lateThresholdMinutes = shiftConfig.startHour * 60 + shiftConfig.graceMinute;
+      const isLate = currentMinutesPastMidnight > lateThresholdMinutes;
 
       const newRecord = await prisma.attendance.create({
         data: {
@@ -316,8 +368,8 @@ export async function POST(req: Request) {
       return NextResponse.json({
         success: true,
         message: isLate
-          ? 'Punched in (Marked Late — after 10:15 AM IST). Tasks for the day recorded.'
-          : 'Punched in successfully on time! Have a productive day.',
+          ? `Punched in (Marked Late — after ${shiftConfig.startHour % 12 || 12}:${String(shiftConfig.graceMinute).padStart(2, '0')} ${shiftConfig.startHour >= 12 ? 'PM' : 'AM'} IST). Tasks for the day recorded.`
+          : `Punched in successfully on time for your shift (${shiftConfig.shiftStart} – ${shiftConfig.shiftEnd})! Have a productive day.`,
         attendance: newRecord,
       });
     }
@@ -326,7 +378,6 @@ export async function POST(req: Request) {
     // ACTION: PUNCH_OUT
     // ==========================================
     if (action === 'PUNCH_OUT') {
-      // 1. Find user's active open shift (100% bulletproof: punchOut IS null)
       let activeRecord = await prisma.attendance.findFirst({
         where: {
           userId: sessionUser.id,
@@ -336,7 +387,6 @@ export async function POST(req: Request) {
       });
 
       if (!activeRecord) {
-        // Fallback: check if punched in today
         activeRecord = await prisma.attendance.findFirst({
           where: {
             userId: sessionUser.id,
@@ -350,20 +400,19 @@ export async function POST(req: Request) {
 
         if (!activeRecord) {
           return NextResponse.json(
-            { error: 'No active punch-in record found for today. Please punch in first.' },
+            { error: 'No active punch-in record found. Please punch in first.' },
             { status: 400 }
           );
         }
 
         if (activeRecord.punchOut) {
           return NextResponse.json(
-            { error: 'You have already punched out of today\'s shift.' },
+            { error: 'You have already punched out of this shift.' },
             { status: 400 }
           );
         }
       }
 
-      // 2. Validate work done (Mandatory)
       if (!workDone || !workDone.trim() || workDone.trim().length < 5) {
         return NextResponse.json(
           { error: 'Please enter your work done / daily report before punching out (minimum 5 characters).' },
@@ -371,14 +420,13 @@ export async function POST(req: Request) {
         );
       }
 
-      // 3. Calculate working hours automatically from system timestamp
       const punchInMs = new Date(activeRecord.punchIn).getTime();
       const punchOutMs = now.getTime();
       const diffMs = Math.max(0, punchOutMs - punchInMs);
       const hours = Math.max(0.01, Number((diffMs / (1000 * 60 * 60)).toFixed(2)));
 
       let status = activeRecord.status;
-      if (hours < 4.5 && status !== 'LATE') {
+      if (hours < shiftConfig.halfDayThreshold && status !== 'LATE') {
         status = 'HALF_DAY';
       }
 

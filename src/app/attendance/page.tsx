@@ -97,6 +97,20 @@ export default function AttendancePage() {
     avgDailyHours: '8.0',
   });
 
+  const [shiftConfig, setShiftConfig] = useState({
+    roleGroup: 'CEO & Managing Director',
+    shiftStart: '4:00 PM',
+    shiftEnd: '9:00 PM',
+    startHour: 16,
+    startMinute: 0,
+    endHour: 21,
+    endMinute: 0,
+    graceMinute: 15,
+    targetHours: 5.0,
+    halfDayThreshold: 2.5,
+  });
+  const [officialStartDate, setOfficialStartDate] = useState('Monday, Nov 16, 2026');
+
   // Modals
   const [showPunchInModal, setShowPunchInModal] = useState(false);
   const [showPunchOutModal, setShowPunchOutModal] = useState(false);
@@ -133,6 +147,12 @@ export default function AttendancePage() {
         }
         if (data.stats) {
           setStats(data.stats);
+        }
+        if (data.shiftConfig) {
+          setShiftConfig(data.shiftConfig);
+        }
+        if (data.officialStartDate) {
+          setOfficialStartDate(data.officialStartDate);
         }
         if (data.staffAttendance) {
           setStaffList(data.staffAttendance);
@@ -590,51 +610,60 @@ export default function AttendancePage() {
               <div className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col justify-between space-y-4">
                 <div>
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <h3 className="text-sm font-black text-slate-900">Live Time &amp; Attendance Policy</h3>
+                    <h3 className="text-sm font-black text-slate-900">Shift Timings &amp; Policy</h3>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">
-                      SLS Rules
+                      Starts {officialStartDate}
                     </span>
                   </div>
 
-                  <div className="space-y-3.5 mt-4 text-xs text-slate-600">
-                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        Current System Time (Auto)
-                      </p>
-                      <p className="text-lg font-black font-mono text-slate-900 mt-0.5">
-                        {currentTime ? currentTime.toLocaleTimeString('en-IN', { hour12: true }) : '--:--'}
-                      </p>
-                      <p className="text-[10px] text-slate-500 mt-0.5">
-                        Times are fetched automatically from the server clock.
-                      </p>
-                    </div>
-
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-2 h-2 rounded-full bg-emerald-600 mt-1.5 shrink-0" />
-                      <div>
-                        <strong className="text-slate-900">Shift Timings:</strong> 10:00 AM – 7:00 PM IST (Mon–Sat)
+                  <div className="space-y-3 mt-3 text-xs text-slate-600">
+                    {/* User's Role-Specific Shift Highlight */}
+                    <div className="p-3 bg-blue-50/80 rounded-2xl border border-blue-100 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">
+                          Your Assigned Shift
+                        </span>
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-200/70 text-blue-900">
+                          {shiftConfig.roleGroup}
+                        </span>
                       </div>
+                      <p className="text-base font-black text-blue-950 font-mono">
+                        {shiftConfig.shiftStart} – {shiftConfig.shiftEnd}
+                      </p>
+                      <p className="text-[10px] text-blue-700 font-medium">
+                        Grace period until {shiftConfig.startHour % 12 || 12}:{String(shiftConfig.graceMinute).padStart(2, '0')} {shiftConfig.startHour >= 12 ? 'PM' : 'AM'} IST. Marked Late afterwards.
+                      </p>
                     </div>
 
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5 shrink-0" />
-                      <div>
-                        <strong className="text-slate-900">Grace Period:</strong> Punctual before 10:15 AM. Marked <span className="text-amber-700 font-semibold">Late</span> afterwards.
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-2 h-2 rounded-full bg-blue-600 mt-1.5 shrink-0" />
-                      <div>
-                        <strong className="text-slate-900">Mandatory Entries:</strong> Tasks for the day required at check-in; work summary required at checkout.
+                    {/* SLS Team Schedule Overview */}
+                    <div className="space-y-1.5 pt-1">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Official SLS Timing Schedule:
+                      </p>
+                      <div className="grid grid-cols-1 gap-1 text-[11px]">
+                        <div className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-100">
+                          <span className="font-semibold text-slate-700">CEO &amp; MD</span>
+                          <span className="font-mono font-bold text-slate-900">4:00 PM – 9:00 PM</span>
+                        </div>
+                        <div className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-100">
+                          <span className="font-semibold text-slate-700">IT &amp; Account Manager</span>
+                          <span className="font-mono font-bold text-slate-900">2:00 PM – 8:00 PM</span>
+                        </div>
+                        <div className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-100">
+                          <span className="font-semibold text-slate-700">Other Staff (Sales, BD, Mkt)</span>
+                          <span className="font-mono font-bold text-slate-900">12:00 PM – 8:00 PM</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100 flex items-center justify-between text-xs">
-                  <span className="text-slate-600 font-medium">Weekly Off</span>
-                  <span className="font-bold text-indigo-700">Sunday</span>
+                <div className="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-100 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 text-emerald-800 font-semibold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>CRM Team Launch: Monday, Nov 16</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-700 uppercase">Sunday Off</span>
                 </div>
               </div>
             </div>
@@ -1033,7 +1062,9 @@ export default function AttendancePage() {
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                     <CheckCircle2 className="w-3 h-3" /> Auto-Captured
                   </span>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Grace period until 10:15 AM</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    Shift: {shiftConfig.shiftStart} (Grace: {shiftConfig.startHour % 12 || 12}:{String(shiftConfig.graceMinute).padStart(2, '0')} {shiftConfig.startHour >= 12 ? 'PM' : 'AM'})
+                  </p>
                 </div>
               </div>
 
