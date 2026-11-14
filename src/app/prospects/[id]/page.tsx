@@ -593,8 +593,8 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
 
         {/* Modal: WhatsApp Direct Message with Template Selection */}
         {showWhatsAppModal && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
+            <div className="my-auto max-h-[90vh] overflow-y-auto bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <MessageCircle className="w-5 h-5 text-emerald-600" />
@@ -662,8 +662,8 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
 
         {/* Modal: Log Activity */}
         {showActivityModal && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-            <form onSubmit={handleAddActivity} className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
+            <form onSubmit={handleAddActivity} className="my-auto max-h-[90vh] overflow-y-auto bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 className="text-base font-bold text-slate-900">Log Outreach Activity</h3>
                 <button type="button" onClick={() => setShowActivityModal(false)} className="text-slate-400 hover:text-slate-600 text-lg">
@@ -732,8 +732,8 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
 
         {/* Modal: Schedule Follow-up */}
         {showFollowUpModal && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-            <form onSubmit={handleScheduleFollowUp} className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
+            <form onSubmit={handleScheduleFollowUp} className="my-auto max-h-[90vh] overflow-y-auto bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 className="text-base font-bold text-slate-900">Schedule Follow-up</h3>
                 <button type="button" onClick={() => setShowFollowUpModal(false)} className="text-slate-400 hover:text-slate-600 text-lg">
@@ -801,8 +801,8 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
 
         {/* Modal: Add Note */}
         {showNoteModal && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-            <form onSubmit={handleAddNote} className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
+            <form onSubmit={handleAddNote} className="my-auto max-h-[90vh] overflow-y-auto bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 className="text-base font-bold text-slate-900">Add Internal Note</h3>
                 <button type="button" onClick={() => setShowNoteModal(false)} className="text-slate-400 hover:text-slate-600 text-lg">
@@ -842,8 +842,8 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
 
         {/* Modal: Convert to Client (Section 12 of PDF) */}
         {showConvertModal && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-            <form onSubmit={handleConvertToClient} className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
+            <form onSubmit={handleConvertToClient} className="my-auto max-h-[90vh] overflow-y-auto bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <Trophy className="w-5 h-5 text-indigo-600" />
@@ -917,8 +917,8 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
 
         {/* Sensitive Action: Archive Confirmation Modal */}
         {showArchiveConfirm && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
-            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-sm w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-150">
+            <div className="my-auto max-h-[90vh] overflow-y-auto bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-sm w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100">
                   <Trash2 className="w-5 h-5" />
@@ -958,8 +958,8 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
 
         {/* Sensitive Action: Mark as Lost / Not Interested Confirmation Modal */}
         {pendingStatusConfirm && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
-            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-sm w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-150">
+            <div className="my-auto max-h-[90vh] overflow-y-auto bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-sm w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200">
                   <AlertCircle className="w-5 h-5" />

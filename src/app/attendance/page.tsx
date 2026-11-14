@@ -1021,8 +1021,8 @@ export default function AttendancePage() {
       {/* MODAL 1: PUNCH IN - ENTER TODAY'S PLANNED TASKS (AUTOMATIC TIME FETCHED)  */}
       {/* ========================================================================= */}
       {showPunchInModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-lg w-full p-6 sm:p-7 space-y-5 animate-scale-in">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 z-50 overflow-y-auto">
+          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-lg w-full p-6 sm:p-7 space-y-5 animate-scale-in my-auto max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
@@ -1171,8 +1171,8 @@ export default function AttendancePage() {
       {/* MODAL 2: PUNCH OUT - ENTER WORK DONE / SUMMARY (AUTOMATIC TIME FETCHED)   */}
       {/* ========================================================================= */}
       {showPunchOutModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-lg w-full p-6 sm:p-7 space-y-5 animate-scale-in">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 z-50 overflow-y-auto">
+          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-lg w-full p-6 sm:p-7 space-y-5 animate-scale-in my-auto max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-rose-50 text-rose-600 rounded-2xl border border-rose-100">
@@ -1297,8 +1297,8 @@ export default function AttendancePage() {
       {/* MODAL 3: VIEW DAY DETAILS & WORK SUMMARY MODAL                            */}
       {/* ========================================================================= */}
       {selectedDayDetails && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-lg w-full p-6 sm:p-7 space-y-4 animate-scale-in">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 z-50 overflow-y-auto">
+          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-lg w-full p-6 sm:p-7 space-y-4 animate-scale-in my-auto max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">

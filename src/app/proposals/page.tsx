@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
+  X,
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
@@ -203,14 +204,21 @@ export default function ProposalsPage() {
           </div>
         </div>
 
-        {/* Modal: Create Proposal */}
+        {/* Modal: Create Proposal (Responsive & Scroll-Safe) */}
         {showModal && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-            <form onSubmit={handleCreateProposal} className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-scale-in">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-base font-bold text-slate-900">Create Client Proposal</h3>
-                <button type="button" onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 text-lg">
-                  &times;
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 z-50 overflow-y-auto">
+            <form onSubmit={handleCreateProposal} className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-scale-in my-auto max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 sticky top-0 bg-white z-10">
+                <div>
+                  <h3 className="text-base font-black text-slate-900">Create Client Proposal</h3>
+                  <p className="text-[11px] text-slate-500">Draft or send official proposal</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
