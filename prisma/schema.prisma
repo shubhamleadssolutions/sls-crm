@@ -496,6 +496,9 @@ model Attendance {
   punchIn      DateTime  @default(now())
   punchOut     DateTime?
   status       String    @default("PRESENT") // PRESENT, LATE, HALF_DAY
+  plannedTasks String?
+  workDone     String?
+  workLocation String?   @default("Office")
   notes        String?
   workingHours Decimal?  @db.Decimal(5, 2)
   ipAddress    String?
