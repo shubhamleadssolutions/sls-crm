@@ -83,7 +83,7 @@ export default function ReportsPage() {
                 Business Analytics & Executive Reports
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
-                Phase 1, 2 & 3 Combined
+                Commercial Overview
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1">
@@ -240,7 +240,7 @@ export default function ReportsPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <Briefcase className="w-4 h-4 text-blue-600" />
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-                    Phase 1: B2B Outreach
+                    B2B Pipeline &amp; Outreach
                   </h4>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
@@ -253,7 +253,7 @@ export default function ReportsPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-                    Phase 2: Client Retainers
+                    Institutional Retainers
                   </h4>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
@@ -269,7 +269,7 @@ export default function ReportsPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <GraduationCap className="w-4 h-4 text-purple-600" />
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-                    Phase 3: Student Delivery
+                    Student Lead Delivery
                   </h4>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">

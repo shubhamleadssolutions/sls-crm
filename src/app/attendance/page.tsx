@@ -611,9 +611,6 @@ export default function AttendancePage() {
                 <div>
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <h3 className="text-sm font-black text-slate-900">Shift Timings &amp; Policy</h3>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">
-                      Starts {officialStartDate}
-                    </span>
                   </div>
 
                   <div className="space-y-3 mt-3 text-xs text-slate-600">
@@ -658,12 +655,12 @@ export default function AttendancePage() {
                   </div>
                 </div>
 
-                <div className="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-100 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2 text-emerald-800 font-semibold">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>CRM Team Launch: Monday, Nov 16</span>
+                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 text-slate-700 font-semibold">
+                    <Clock className="w-4 h-4 text-slate-500" />
+                    <span>Weekly Working Schedule</span>
                   </div>
-                  <span className="text-[10px] font-bold text-emerald-700 uppercase">Sunday Off</span>
+                  <span className="text-[10px] font-bold text-slate-600 uppercase">Sunday Off</span>
                 </div>
               </div>
             </div>

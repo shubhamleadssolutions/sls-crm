@@ -168,7 +168,7 @@ function StudentLeadsContent() {
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Phase 3 Education Inquiries: Track student applications, counselling sessions, and enrolled admissions.
+              Track student applications, counselling sessions, and enrolled admissions.
             </p>
           </div>
 

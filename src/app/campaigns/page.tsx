@@ -125,7 +125,7 @@ function CampaignsContent() {
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Phase 3 Paid Media Management: Track Meta & Google Ads performance for partner colleges.
+              Track Meta & Google Ads performance for partner colleges and educational institutions.
             </p>
           </div>
 

@@ -126,7 +126,7 @@ export default function ClientsPage() {
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Phase 2 Client Portfolio: Manage retainer accounts, marketing deliverables, and performance campaigns.
+              Manage client retainer accounts, marketing deliverables, and performance campaigns.
             </p>
           </div>
 
