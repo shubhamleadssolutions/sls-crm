@@ -99,18 +99,21 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { channel = 'general', content, attachments } = body;
 
-    if (!content?.trim()) {
-      return NextResponse.json({ error: 'Message content cannot be empty' }, { status: 400 });
+    const hasContent = typeof content === 'string' && content.trim().length > 0;
+    const hasAttachments = Array.isArray(attachments) && attachments.length > 0;
+
+    if (!hasContent && !hasAttachments) {
+      return NextResponse.json({ error: 'Message content or attachment is required' }, { status: 400 });
     }
 
     const message = await prisma.chatMessage.create({
       data: {
         channel,
-        content: content.trim(),
+        content: hasContent ? content.trim() : '',
         senderId: user.id,
         senderName: user.name,
         senderRole: user.designation || user.role,
-        attachments: attachments || null,
+        attachments: hasAttachments ? attachments : null,
         reactions: {},
       },
     });
