@@ -604,26 +604,28 @@ export default function BillingPage() {
 
         {/* Modal: Add Item to Inventory */}
         {showAddInventoryModal && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 z-50 overflow-y-auto">
-            <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-5 animate-scale-in my-auto max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-                    <Package className="w-5 h-5" />
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
+            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+              <div className="fixed inset-0" onClick={() => setShowAddInventoryModal(false)} aria-hidden="true" />
+              <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-left my-8 animate-scale-in">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                      <Package className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-900">Add Service to Inventory</h3>
+                      <p className="text-[11px] text-slate-500">Standardize pricing and deliverables for rapid invoicing</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-base font-extrabold text-slate-900">Add Service to Inventory</h3>
-                    <p className="text-[11px] text-slate-500">Standardize pricing and deliverables for rapid invoicing</p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddInventoryModal(false)}
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAddInventoryModal(false)}
-                  className="text-slate-400 hover:text-slate-600 text-xl font-bold p-1 cursor-pointer"
-                >
-                  ✕
-                </button>
-              </div>
 
               <form onSubmit={handleCreateInventoryItem} className="space-y-4">
                 <div>
@@ -714,6 +716,7 @@ export default function BillingPage() {
                   </button>
                 </div>
               </form>
+            </div>
             </div>
           </div>
         )}

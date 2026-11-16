@@ -137,10 +137,20 @@ export async function GET(req: Request) {
     const monthRecords = await prisma.attendance.findMany({
       where: {
         userId: sessionUser.id,
-        punchIn: {
-          gte: monthStartUTC,
-          lte: monthEndUTC,
-        },
+        OR: [
+          {
+            punchIn: {
+              gte: monthStartUTC,
+              lte: monthEndUTC,
+            },
+          },
+          {
+            date: {
+              gte: monthStartUTC,
+              lte: monthEndUTC,
+            },
+          },
+        ],
       },
       orderBy: { punchIn: 'asc' },
     });
@@ -154,7 +164,8 @@ export async function GET(req: Request) {
     let totalHoursLogged = 0;
 
     monthRecords.forEach((rec) => {
-      const recIST = getISTDate(new Date(rec.punchIn));
+      const recDate = rec.punchIn || rec.date;
+      const recIST = getISTDate(new Date(recDate));
       const dateKey = `${recIST.getFullYear()}-${String(recIST.getMonth() + 1).padStart(2, '0')}-${String(recIST.getDate()).padStart(2, '0')}`;
       
       attendanceByDate[dateKey] = {
@@ -241,6 +252,12 @@ export async function GET(req: Request) {
             { punchOut: null },
             {
               punchIn: {
+                gte: todayStart,
+                lte: todayEnd,
+              },
+            },
+            {
+              date: {
                 gte: todayStart,
                 lte: todayEnd,
               },
@@ -447,6 +464,123 @@ export async function POST(req: Request) {
         success: true,
         message: `Punched out successfully! Shift Duration: ${hours} hrs. Work summary saved.`,
         attendance: updated,
+      });
+    }
+
+    // ==========================================
+    // ACTION: MARK_LEAVE (Executive Action for MD & CEO)
+    // ==========================================
+    if (action === 'MARK_LEAVE') {
+      const isExecutive = sessionUser.role === 'ADMIN' || sessionUser.role === 'CEO';
+      if (!isExecutive) {
+        return NextResponse.json(
+          { error: 'Forbidden: Only CEO and Managing Director (MD) can mark staff leaves.' },
+          { status: 403 }
+        );
+      }
+
+      const { targetUserId, startDate, endDate, leaveType = 'LEAVE', reason } = body;
+
+      if (!targetUserId) {
+        return NextResponse.json({ error: 'Please select a staff member.' }, { status: 400 });
+      }
+
+      if (!startDate) {
+        return NextResponse.json({ error: 'Please choose the leave date.' }, { status: 400 });
+      }
+
+      const targetUser = await prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: { id: true, name: true, username: true, role: true },
+      });
+
+      if (!targetUser) {
+        return NextResponse.json({ error: 'Staff member not found.' }, { status: 404 });
+      }
+
+      // Generate date array from startDate to endDate
+      const datesToMark: Date[] = [];
+      const s = new Date(startDate + 'T00:00:00Z');
+      const e = endDate ? new Date(endDate + 'T00:00:00Z') : new Date(startDate + 'T00:00:00Z');
+
+      for (let cur = new Date(s); cur <= e; cur.setUTCDate(cur.getUTCDate() + 1)) {
+        // Skip Sundays if it's a multi-day range
+        if (cur.getUTCDay() === 0 && s.getTime() !== e.getTime()) continue;
+        datesToMark.push(new Date(cur));
+      }
+
+      if (datesToMark.length === 0) {
+        datesToMark.push(new Date(s));
+      }
+
+      const leaveLabel =
+        leaveType === 'HALF_DAY'
+          ? 'Half Day Leave'
+          : leaveType === 'ABSENT'
+          ? 'Marked Absent'
+          : 'Approved Leave';
+
+      const leaveNote = reason?.trim()
+        ? `[${leaveLabel} by ${sessionUser.name} (${sessionUser.role})] ${reason.trim()}`
+        : `[${leaveLabel} by ${sessionUser.name} (${sessionUser.role})]`;
+
+      for (const d of datesToMark) {
+        const { startUTC: dStart, endUTC: dEnd } = getISTDayBounds(d);
+
+        const existing = await prisma.attendance.findFirst({
+          where: {
+            userId: targetUser.id,
+            OR: [
+              { date: { gte: dStart, lte: dEnd } },
+              { punchIn: { gte: dStart, lte: dEnd } },
+            ],
+          },
+        });
+
+        if (existing) {
+          await prisma.attendance.update({
+            where: { id: existing.id },
+            data: {
+              status: leaveType,
+              date: dStart,
+              punchIn: dStart,
+              punchOut: dEnd,
+              plannedTasks: leaveNote,
+              workDone: leaveNote,
+              notes: leaveNote,
+              workingHours: leaveType === 'HALF_DAY' ? 4.0 : 0,
+            },
+          });
+        } else {
+          await prisma.attendance.create({
+            data: {
+              userId: targetUser.id,
+              date: dStart,
+              punchIn: dStart,
+              punchOut: dEnd,
+              status: leaveType,
+              plannedTasks: leaveNote,
+              workDone: leaveNote,
+              notes: leaveNote,
+              workingHours: leaveType === 'HALF_DAY' ? 4.0 : 0,
+            },
+          });
+        }
+      }
+
+      await prisma.auditLog.create({
+        data: {
+          userId: sessionUser.id,
+          action: 'LEAVE_RECORDED',
+          entityType: 'Attendance',
+          entityId: targetUser.id,
+          details: `${sessionUser.name} marked ${leaveType} for ${targetUser.name} (@${targetUser.username}) for ${datesToMark.length} day(s) starting ${startDate}: ${reason || 'Executive update'}`,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Successfully marked ${leaveLabel} for ${targetUser.name} (${datesToMark.length} day${datesToMark.length > 1 ? 's' : ''}).`,
       });
     }
 

@@ -17,6 +17,7 @@ import {
   Play,
   Search,
   Lock,
+  X,
 } from 'lucide-react';
 import { formatDate, formatDateTime } from '@/lib/utils';
 
@@ -431,20 +432,23 @@ export default function MeetingsPage() {
       {/* SCHEDULE MEETING MODAL (Administrative roles only)                        */}
       {/* ========================================================================= */}
       {showScheduleModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4 animate-scale-in my-auto max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">Schedule Client Meeting</h3>
-                <p className="text-[11px] text-slate-500">Authorized by Leadership (MD, CEO, Account Manager, IT Manager)</p>
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
+          <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+            <div className="fixed inset-0" onClick={() => setShowScheduleModal(false)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 space-y-4 text-left my-8 animate-scale-in">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Schedule Client Meeting</h3>
+                  <p className="text-[11px] text-slate-500">Authorized by Leadership (MD, CEO, Account Manager, IT Manager)</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowScheduleModal(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                onClick={() => setShowScheduleModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold p-1 rounded-lg"
-              >
-                ✕
-              </button>
-            </div>
 
             {scheduleError && (
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
@@ -535,6 +539,7 @@ export default function MeetingsPage() {
                 </button>
               </div>
             </form>
+          </div>
           </div>
         </div>
       )}

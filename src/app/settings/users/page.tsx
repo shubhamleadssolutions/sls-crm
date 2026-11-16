@@ -18,6 +18,7 @@ import {
   ArrowLeft,
   Users,
   Search,
+  X,
 } from 'lucide-react';
 
 const ROLE_INFO: Record<string, { label: string; badge: string; desc: string }> = {
@@ -420,26 +421,28 @@ export default function UserManagementPage() {
 
         {/* Modal: Create New User */}
         {showAddModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
-            <div className="my-auto max-h-[90vh] overflow-y-auto bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-5 animate-scale-in">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-                    <UserPlus className="w-5 h-5" />
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
+            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+              <div className="fixed inset-0" onClick={() => setShowAddModal(false)} aria-hidden="true" />
+              <div className="relative z-10 w-full max-w-xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-left my-8 animate-scale-in">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                      <UserPlus className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-900">Create New CRM User</h3>
+                      <p className="text-[11px] text-slate-500">Configure team access credentials and role</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-base font-extrabold text-slate-900">Create New CRM User</h3>
-                    <p className="text-[11px] text-slate-500">Configure team access credentials and role</p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="text-slate-400 hover:text-slate-600 text-xl font-bold p-1 cursor-pointer"
-                >
-                  &times;
-                </button>
-              </div>
 
               {error && (
                 <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
@@ -559,36 +562,46 @@ export default function UserManagementPage() {
                 </div>
               </form>
             </div>
+            </div>
           </div>
         )}
 
         {/* Modal: Manage / Edit User Profile */}
         {editModalOpen && editingUser && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
-            <div className="my-auto max-h-[90vh] overflow-y-auto bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-5 animate-scale-in">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-                    <Edit className="w-5 h-5" />
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
+            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+              <div
+                className="fixed inset-0"
+                onClick={() => {
+                  setEditModalOpen(false);
+                  setEditingUser(null);
+                }}
+                aria-hidden="true"
+              />
+              <div className="relative z-10 w-full max-w-xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-left my-8 animate-scale-in">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                      <Edit className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-900">Manage User Profile</h3>
+                      <p className="text-[11px] text-slate-500">
+                        Update credentials, role permissions, and profile details for <strong className="text-slate-800">@{editingUser.username}</strong>
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-base font-extrabold text-slate-900">Manage User Profile</h3>
-                    <p className="text-[11px] text-slate-500">
-                      Update credentials, role permissions, and profile details for <strong className="text-slate-800">@{editingUser.username}</strong>
-                    </p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditModalOpen(false);
+                      setEditingUser(null);
+                    }}
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditModalOpen(false);
-                    setEditingUser(null);
-                  }}
-                  className="text-slate-400 hover:text-slate-600 text-xl font-bold p-1 cursor-pointer"
-                >
-                  &times;
-                </button>
-              </div>
 
               {error && (
                 <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
@@ -707,30 +720,33 @@ export default function UserManagementPage() {
                 </div>
               </form>
             </div>
+            </div>
           </div>
         )}
 
         {/* Sensitive Action Confirmation Modal: Deactivate / Activate User */}
         {confirmUserAction && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
-            <div className="my-auto max-h-[90vh] overflow-y-auto bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-sm w-full p-6 space-y-4 animate-scale-in">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`p-2.5 rounded-2xl border ${
-                    confirmUserAction.action === 'deactivate'
-                      ? 'bg-rose-50 text-rose-600 border-rose-100'
-                      : 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                  }`}
-                >
-                  <ShieldCheck className="w-5 h-5" />
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
+            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+              <div className="fixed inset-0" onClick={() => setConfirmUserAction(null)} aria-hidden="true" />
+              <div className="relative z-10 w-full max-w-sm bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-8 animate-scale-in">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`p-2.5 rounded-2xl border ${
+                      confirmUserAction.action === 'deactivate'
+                        ? 'bg-rose-50 text-rose-600 border-rose-100'
+                        : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                    }`}
+                  >
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900">
+                      {confirmUserAction.action === 'deactivate' ? 'Deactivate User Account?' : 'Reactivate User Account?'}
+                    </h3>
+                    <p className="text-[11px] text-slate-500">Security authorization required</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-black text-slate-900">
-                    {confirmUserAction.action === 'deactivate' ? 'Deactivate User Account?' : 'Reactivate User Account?'}
-                  </h3>
-                  <p className="text-[11px] text-slate-500">Security authorization required</p>
-                </div>
-              </div>
 
               <p className="text-xs text-slate-600 leading-relaxed">
                 {confirmUserAction.action === 'deactivate' ? (
@@ -768,6 +784,7 @@ export default function UserManagementPage() {
                   {confirmUserAction.action === 'deactivate' ? 'Yes, Deactivate' : 'Yes, Reactivate'}
                 </button>
               </div>
+            </div>
             </div>
           </div>
         )}

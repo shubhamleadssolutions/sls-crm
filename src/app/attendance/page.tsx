@@ -27,6 +27,7 @@ import {
   ChevronRight,
   Eye,
   CalendarDays,
+  CalendarCheck,
   Palmtree,
   Info,
 } from 'lucide-react';
@@ -115,6 +116,16 @@ export default function AttendancePage() {
   const [showPunchInModal, setShowPunchInModal] = useState(false);
   const [showPunchOutModal, setShowPunchOutModal] = useState(false);
   const [selectedDayDetails, setSelectedDayDetails] = useState<{ dateStr: string; record: DayRecord | null } | null>(null);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [leaveSubmitting, setLeaveSubmitting] = useState(false);
+  const [leaveForm, setLeaveForm] = useState({
+    targetUserId: '',
+    isRange: false,
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+    leaveType: 'LEAVE',
+    reason: '',
+  });
 
   // Form State
   const [plannedTasksInput, setPlannedTasksInput] = useState('');
@@ -263,6 +274,55 @@ export default function AttendancePage() {
       setFormError(err.message || 'Network error occurred');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleMarkLeave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leaveForm.targetUserId) {
+      setFeedback({ type: 'error', message: 'Please select an employee.' });
+      return;
+    }
+    if (!leaveForm.startDate) {
+      setFeedback({ type: 'error', message: 'Please choose the leave date.' });
+      return;
+    }
+
+    setLeaveSubmitting(true);
+    try {
+      const res = await fetch('/api/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'MARK_LEAVE',
+          targetUserId: leaveForm.targetUserId,
+          startDate: leaveForm.startDate,
+          endDate: leaveForm.isRange ? leaveForm.endDate : leaveForm.startDate,
+          leaveType: leaveForm.leaveType,
+          reason: leaveForm.reason,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to record leave');
+      }
+
+      setFeedback({ type: 'success', message: data.message || 'Leave successfully recorded!' });
+      setShowLeaveModal(false);
+      setLeaveForm({
+        targetUserId: '',
+        isRange: false,
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0],
+        leaveType: 'LEAVE',
+        reason: '',
+      });
+      await fetchAttendanceData(viewDate.getFullYear(), viewDate.getMonth() + 1);
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Error recording leave.' });
+    } finally {
+      setLeaveSubmitting(false);
     }
   };
 
@@ -907,9 +967,29 @@ export default function AttendancePage() {
                   </p>
                 </div>
               </div>
-              <span className="text-xs font-bold px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200">
-                Staff Count: {staffList.length} Members
-              </span>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="text-xs font-bold px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200">
+                  Staff: {staffList.length} Members
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLeaveForm({
+                      targetUserId: staffList[0]?.userId || '',
+                      isRange: false,
+                      startDate: new Date().toISOString().split('T')[0],
+                      endDate: new Date().toISOString().split('T')[0],
+                      leaveType: 'LEAVE',
+                      reason: '',
+                    });
+                    setShowLeaveModal(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold shadow-sm shadow-purple-500/20 active:scale-95 transition cursor-pointer"
+                >
+                  <CalendarCheck className="w-4 h-4" />
+                  <span>Mark Staff Leave</span>
+                </button>
+              </div>
             </div>
 
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-xs text-slate-600 flex items-start gap-2.5">
@@ -957,14 +1037,24 @@ export default function AttendancePage() {
                               ? 'bg-amber-100 text-amber-800'
                               : member.status === 'HALF_DAY'
                               ? 'bg-sky-100 text-sky-800'
+                              : member.status === 'LEAVE'
+                              ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                              : member.status === 'ABSENT'
+                              ? 'bg-rose-100 text-rose-800 border border-rose-200'
                               : 'bg-slate-100 text-slate-500'
                           }`}
                         >
-                          {member.status === 'NOT_MARKED' ? 'Not Checked In' : member.status}
+                          {member.status === 'NOT_MARKED'
+                            ? 'Not Checked In'
+                            : member.status === 'LEAVE'
+                            ? 'Approved Leave'
+                            : member.status === 'HALF_DAY'
+                            ? 'Half Day'
+                            : member.status}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 font-mono">
-                        {member.punchIn
+                        {member.punchIn && member.status !== 'LEAVE'
                           ? new Date(member.punchIn).toLocaleTimeString('en-IN', {
                               hour: '2-digit',
                               minute: '2-digit',
@@ -973,37 +1063,64 @@ export default function AttendancePage() {
                           : '—'}
                       </td>
                       <td className="px-5 py-3.5 font-mono">
-                        {member.punchOut
+                        {member.punchOut && member.status !== 'LEAVE'
                           ? new Date(member.punchOut).toLocaleTimeString('en-IN', {
                               hour: '2-digit',
                               minute: '2-digit',
                               hour12: true,
                             })
-                          : member.punchIn
+                          : member.punchIn && member.status !== 'LEAVE'
                           ? 'In Shift'
                           : '—'}
                       </td>
                       <td className="px-5 py-3.5 font-bold text-slate-900">
-                        {member.workingHours ? `${member.workingHours} hrs` : member.punchIn ? 'Active' : '—'}
+                        {member.status === 'LEAVE'
+                          ? '0 hrs (Leave)'
+                          : member.workingHours
+                          ? `${member.workingHours} hrs`
+                          : member.punchIn
+                          ? 'Active'
+                          : '—'}
                       </td>
                       <td className="px-5 py-3.5 text-slate-600 max-w-[180px] truncate">
                         {member.plannedTasks || '—'}
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        {(member.plannedTasks || member.workDone) && (
+                        <div className="flex items-center justify-end gap-1.5">
                           <button
-                            onClick={() =>
-                              setSelectedDayDetails({
-                                dateStr: 'Today',
-                                record: member as any,
-                              })
-                            }
-                            className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition cursor-pointer"
-                            title="Inspect Task & Work Report"
+                            type="button"
+                            onClick={() => {
+                              setLeaveForm({
+                                targetUserId: member.userId,
+                                isRange: false,
+                                startDate: new Date().toISOString().split('T')[0],
+                                endDate: new Date().toISOString().split('T')[0],
+                                leaveType: 'LEAVE',
+                                reason: '',
+                              });
+                              setShowLeaveModal(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100 text-[10px] font-bold transition cursor-pointer border border-purple-200/70"
+                            title="Mark Leave / Absence for this employee"
                           >
-                            <Eye className="w-4 h-4" />
+                            <CalendarCheck className="w-3 h-3" />
+                            <span>Mark Leave</span>
                           </button>
-                        )}
+                          {(member.plannedTasks || member.workDone) && (
+                            <button
+                              onClick={() =>
+                                setSelectedDayDetails({
+                                  dateStr: 'Today',
+                                  record: member as any,
+                                })
+                              }
+                              className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+                              title="Inspect Task & Work Report"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1018,26 +1135,28 @@ export default function AttendancePage() {
       {/* MODAL 1: PUNCH IN - ENTER TODAY'S PLANNED TASKS (AUTOMATIC TIME FETCHED)  */}
       {/* ========================================================================= */}
       {showPunchInModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 z-50 overflow-y-auto">
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-lg w-full p-6 sm:p-7 space-y-5 animate-scale-in my-auto max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
-                  <Clock className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
+          <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+            <div className="fixed inset-0" onClick={() => setShowPunchInModal(false)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 sm:p-7 space-y-5 text-left my-8 animate-scale-in">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">Shift Punch In</h3>
+                    <p className="text-[11px] text-slate-500">Official time fetched automatically</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">Shift Punch In</h3>
-                  <p className="text-[11px] text-slate-500">Official time fetched automatically</p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPunchInModal(false)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowPunchInModal(false)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
             {formError && (
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
@@ -1161,6 +1280,7 @@ export default function AttendancePage() {
               </div>
             </form>
           </div>
+          </div>
         </div>
       )}
 
@@ -1168,26 +1288,28 @@ export default function AttendancePage() {
       {/* MODAL 2: PUNCH OUT - ENTER WORK DONE / SUMMARY (AUTOMATIC TIME FETCHED)   */}
       {/* ========================================================================= */}
       {showPunchOutModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 z-50 overflow-y-auto">
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-lg w-full p-6 sm:p-7 space-y-5 animate-scale-in my-auto max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-rose-50 text-rose-600 rounded-2xl border border-rose-100">
-                  <Coffee className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
+          <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+            <div className="fixed inset-0" onClick={() => setShowPunchOutModal(false)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 sm:p-7 space-y-5 text-left my-8 animate-scale-in">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-rose-50 text-rose-600 rounded-2xl border border-rose-100">
+                    <Coffee className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">Shift Punch Out &amp; Work Report</h3>
+                    <p className="text-[11px] text-slate-500">Official time fetched automatically</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">Shift Punch Out &amp; Work Report</h3>
-                  <p className="text-[11px] text-slate-500">Official time fetched automatically</p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPunchOutModal(false)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowPunchOutModal(false)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
             {formError && (
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
@@ -1287,6 +1409,7 @@ export default function AttendancePage() {
               </div>
             </form>
           </div>
+          </div>
         </div>
       )}
 
@@ -1294,30 +1417,32 @@ export default function AttendancePage() {
       {/* MODAL 3: VIEW DAY DETAILS & WORK SUMMARY MODAL                            */}
       {/* ========================================================================= */}
       {selectedDayDetails && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 z-50 overflow-y-auto">
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-lg w-full p-6 sm:p-7 space-y-4 animate-scale-in my-auto max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-                  <CalendarIcon className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
+          <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+            <div className="fixed inset-0" onClick={() => setSelectedDayDetails(null)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 sm:p-7 space-y-4 text-left my-8 animate-scale-in">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                    <CalendarIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">
+                      Attendance Log: {selectedDayDetails.dateStr}
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Status: <span className="font-bold text-slate-800">{selectedDayDetails.record?.status || 'No Shift'}</span>
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">
-                    Attendance Log: {selectedDayDetails.dateStr}
-                  </h3>
-                  <p className="text-[11px] text-slate-500">
-                    Status: <span className="font-bold text-slate-800">{selectedDayDetails.record?.status || 'No Shift'}</span>
-                  </p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDayDetails(null)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedDayDetails(null)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
             <div className="space-y-4 text-xs">
               {/* Timing Grid */}
@@ -1383,6 +1508,190 @@ export default function AttendancePage() {
                 Close
               </button>
             </div>
+          </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 4: MARK LEAVE / ABSENCE (EXECUTIVE PANEL FOR MD & CEO)              */}
+      {/* ========================================================================= */}
+      {showLeaveModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
+          <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+            <div className="fixed inset-0" onClick={() => setShowLeaveModal(false)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 sm:p-7 space-y-5 text-left my-8 animate-scale-in">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-purple-50 text-purple-600 rounded-2xl border border-purple-100">
+                    <CalendarCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">Mark Staff Leave / Absence</h3>
+                    <p className="text-[11px] text-slate-500">Executive authorization panel for Managing Director (MD) &amp; CEO</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowLeaveModal(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+            <form onSubmit={handleMarkLeave} className="space-y-4">
+              {/* Employee Selector */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Select Employee <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={leaveForm.targetUserId}
+                  onChange={(e) => setLeaveForm({ ...leaveForm, targetUserId: e.target.value })}
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">-- Choose team member --</option>
+                  {staffList.map((m) => (
+                    <option key={m.userId} value={m.userId}>
+                      {m.name} (@{m.username}) — {m.designation || m.role}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Leave Type Selector */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Attendance / Leave Type <span className="text-rose-500">*</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLeaveForm({ ...leaveForm, leaveType: 'LEAVE' })}
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      leaveForm.leaveType === 'LEAVE'
+                        ? 'bg-purple-50 border-purple-500 text-purple-700 ring-2 ring-purple-500/20 shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-purple-600" />
+                    <span>Approved Leave</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLeaveForm({ ...leaveForm, leaveType: 'HALF_DAY' })}
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      leaveForm.leaveType === 'HALF_DAY'
+                        ? 'bg-sky-50 border-sky-500 text-sky-700 ring-2 ring-sky-500/20 shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-sky-600" />
+                    <span>Half Day</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLeaveForm({ ...leaveForm, leaveType: 'ABSENT' })}
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      leaveForm.leaveType === 'ABSENT'
+                        ? 'bg-rose-50 border-rose-500 text-rose-700 ring-2 ring-rose-500/20 shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-rose-600" />
+                    <span>Mark Absent</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Single Day vs Date Range Toggle */}
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
+                <span className="text-xs font-bold text-slate-700">Multiple Days Range?</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={leaveForm.isRange}
+                    onChange={(e) => setLeaveForm({ ...leaveForm, isRange: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600" />
+                </label>
+              </div>
+
+              {/* Dates */}
+              {leaveForm.isRange ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">From Date *</label>
+                    <input
+                      type="date"
+                      value={leaveForm.startDate}
+                      onChange={(e) => setLeaveForm({ ...leaveForm, startDate: e.target.value })}
+                      required
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">To Date *</label>
+                    <input
+                      type="date"
+                      value={leaveForm.endDate}
+                      min={leaveForm.startDate}
+                      onChange={(e) => setLeaveForm({ ...leaveForm, endDate: e.target.value })}
+                      required
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Leave Date *</label>
+                  <input
+                    type="date"
+                    value={leaveForm.startDate}
+                    onChange={(e) => setLeaveForm({ ...leaveForm, startDate: e.target.value, endDate: e.target.value })}
+                    required
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+              )}
+
+              {/* Reason / Remarks */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Reason / Approval Context (Visible on staff records)
+                </label>
+                <textarea
+                  rows={3}
+                  value={leaveForm.reason}
+                  onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
+                  placeholder="e.g. Leave approved for personal work, medical leave, urgent family commitment..."
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowLeaveModal(false)}
+                  className="px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={leaveSubmitting}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 active:scale-95 transition disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                >
+                  <CalendarCheck className="w-4 h-4" />
+                  <span>{leaveSubmitting ? 'Recording Leave...' : 'Confirm & Save Leave'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
           </div>
         </div>
       )}

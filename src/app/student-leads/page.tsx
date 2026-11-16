@@ -20,6 +20,7 @@ import {
   UserCheck,
   ChevronRight,
   Filter,
+  X,
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
@@ -400,19 +401,22 @@ function StudentLeadsContent() {
 
         {/* Update Status Modal */}
         {updatingLead && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 z-50 overflow-y-auto">
-            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-sm w-full p-6 space-y-4 animate-scale-in my-auto max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <h3 className="text-sm font-bold text-slate-900">
-                  Update {updatingLead.name}
-                </h3>
-                <button
-                  onClick={() => setUpdatingLead(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 text-xs font-bold"
-                >
-                  ✕
-                </button>
-              </div>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
+            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+              <div className="fixed inset-0" onClick={() => setUpdatingLead(null)} aria-hidden="true" />
+              <div className="relative z-10 w-full max-w-sm bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-8 animate-scale-in">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Update {updatingLead.name}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setUpdatingLead(null)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
 
               <div className="space-y-3">
                 <div>
@@ -464,30 +468,34 @@ function StudentLeadsContent() {
                 </div>
               </div>
             </div>
+            </div>
           </div>
         )}
 
         {/* Add Student Lead Modal */}
         {showModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
-            <div className="my-auto max-h-[90vh] overflow-y-auto bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-lg w-full p-6 space-y-4 animate-scale-in">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
-                    <GraduationCap className="w-5 h-5" />
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
+            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
+              <div className="fixed inset-0" onClick={() => setShowModal(false)} aria-hidden="true" />
+              <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-8 animate-scale-in">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+                      <GraduationCap className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">Add New Student Lead</h3>
+                      <p className="text-[11px] text-slate-500">Record a new student admission inquiry</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900">Add New Student Lead</h3>
-                    <p className="text-[11px] text-slate-500">Record a new student admission inquiry</p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 text-xs font-bold"
-                >
-                  ✕
-                </button>
-              </div>
 
               <form onSubmit={handleCreateLead} className="space-y-3.5">
                 <div className="grid grid-cols-2 gap-3">
@@ -614,6 +622,7 @@ function StudentLeadsContent() {
                   </button>
                 </div>
               </form>
+            </div>
             </div>
           </div>
         )}

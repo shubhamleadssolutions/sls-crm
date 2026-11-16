@@ -15,6 +15,12 @@ import {
   RefreshCw,
   Info,
   ShieldAlert,
+  Sparkles,
+  Copy,
+  Check,
+  Download,
+  Building2,
+  Table,
 } from 'lucide-react';
 
 export default function BulkImportPage() {
@@ -29,6 +35,14 @@ export default function BulkImportPage() {
   const [loading, setLoading] = useState(false);
   const [importSummary, setImportSummary] = useState<any>(null);
   const [error, setError] = useState('');
+  const [copiedHeaders, setCopiedHeaders] = useState(false);
+
+  const handleCopyHeaders = () => {
+    const headersText = 'Company Name\tContact Person\tDesignation\tPhone\tWhatsApp Number\tEmail\tWebsite\tCity\tState\tIndustry\tLead Source\tNotes';
+    navigator.clipboard.writeText(headersText);
+    setCopiedHeaders(true);
+    setTimeout(() => setCopiedHeaders(false), 2500);
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError('');
@@ -127,7 +141,9 @@ export default function BulkImportPage() {
       'companyName,contactPerson,designation,phone,whatsappNumber,email,website,city,state,industry,leadSource,potentialRequirement,notes\n' +
       'Symbiosis Institute of Technology,Dr. Rajesh Sharma,Director - Admissions,+919822011223,+919822011223,admissions@sitpune.edu.in,https://www.sitpune.edu.in,Pune,Maharashtra,Higher Education,GOOGLE_MAPS,B.Tech & M.Tech Admissions,Interested in targeted student lead campaigns\n' +
       'Amity Global Business School,Prof. Neha Verma,Dean of Admissions,+919811099887,+919811099887,admissions@agbs.amity.edu,https://www.amity.edu,Noida,Uttar Pradesh,Management Education,LINKEDIN,MBA & BBA Lead Acquisition,Targeting North India student inquiries\n' +
-      'MIT World Peace University,Mr. Vikram Joshi,Head of Outreach,+919922033445,+919922033445,outreach@mitwpu.edu.in,https://www.mitwpu.edu.in,Pune,Maharashtra,Engineering & Tech,REFERRAL,Student Counseling & Walk-ins,Follow up scheduled for institutional meeting\n';
+      'MIT World Peace University,Mr. Vikram Joshi,Head of Outreach,+919922033445,+919922033445,outreach@mitwpu.edu.in,https://www.mitwpu.edu.in,Pune,Maharashtra,Engineering & Tech,REFERRAL,Student Counseling & Walk-ins,Follow up scheduled for institutional meeting\n' +
+      'DY Patil International University,Dr. Sunita Kulkarni,Dean - Academic Alliances,+919890123456,+919890123456,alliances@dypiu.ac.in,https://www.dypiu.ac.in,Pune,Maharashtra,Higher Education,WEBSITE,Comprehensive Retainer Campaign,Looking for 300+ confirmed admissions\n' +
+      'Indira Institute of Management,Mr. Sandeep Patil,Admissions Incharge,+919850567890,+919850567890,admissions@indiraiimp.edu.in,https://www.indiraedu.com,Pune,Maharashtra,Management Education,WHATSAPP,MBA Admissions 2026-27,Wants digital outreach and student counseling support\n';
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -153,7 +169,7 @@ export default function BulkImportPage() {
         'State': 'Maharashtra',
         'Industry': 'Higher Education',
         'Lead Source': 'Google Maps',
-        'Notes': 'Interested in targeted student admissions campaign',
+        'Notes': 'Interested in targeted student lead campaigns',
       },
       {
         'Company Name': 'Amity Global Business School',
@@ -167,7 +183,49 @@ export default function BulkImportPage() {
         'State': 'Uttar Pradesh',
         'Industry': 'Management Education',
         'Lead Source': 'LinkedIn',
-        'Notes': 'MBA admissions lead acquisition 2026',
+        'Notes': 'Targeting North India student inquiries',
+      },
+      {
+        'Company Name': 'MIT World Peace University',
+        'Contact Person': 'Mr. Vikram Joshi',
+        'Designation': 'Head of Outreach',
+        'Phone': '+919922033445',
+        'WhatsApp Number': '+919922033445',
+        'Email': 'outreach@mitwpu.edu.in',
+        'Website': 'https://www.mitwpu.edu.in',
+        'City': 'Pune',
+        'State': 'Maharashtra',
+        'Industry': 'Engineering & Tech',
+        'Lead Source': 'Referral',
+        'Notes': 'Follow up scheduled for institutional demo',
+      },
+      {
+        'Company Name': 'DY Patil International University',
+        'Contact Person': 'Dr. Sunita Kulkarni',
+        'Designation': 'Dean - Academic Alliances',
+        'Phone': '+919890123456',
+        'WhatsApp Number': '+919890123456',
+        'Email': 'alliances@dypiu.ac.in',
+        'Website': 'https://www.dypiu.ac.in',
+        'City': 'Pune',
+        'State': 'Maharashtra',
+        'Industry': 'Higher Education',
+        'Lead Source': 'Website',
+        'Notes': 'Looking for 300+ confirmed admissions',
+      },
+      {
+        'Company Name': 'Indira Institute of Management',
+        'Contact Person': 'Mr. Sandeep Patil',
+        'Designation': 'Admissions Incharge',
+        'Phone': '+919850567890',
+        'WhatsApp Number': '+919850567890',
+        'Email': 'admissions@indiraiimp.edu.in',
+        'Website': 'https://www.indiraedu.com',
+        'City': 'Pune',
+        'State': 'Maharashtra',
+        'Industry': 'Management Education',
+        'Lead Source': 'WhatsApp',
+        'Notes': 'Wants digital outreach and student counseling support',
       },
     ];
 
@@ -250,33 +308,175 @@ export default function BulkImportPage() {
               </p>
             </div>
 
-            {/* Educational Card on How Sync Works */}
-            <div className="bg-gradient-to-r from-blue-50/80 to-indigo-50/60 rounded-2xl border border-blue-100 p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <Info className="w-4 h-4 text-blue-600" />
-                <h3 className="text-xs font-black text-blue-900 uppercase tracking-wide">
-                  How Client Data Syncs &amp; Why Bulk Import Saves Time
-                </h3>
+            {/* Attractive SLS Official Template Showcase Card */}
+            <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 rounded-3xl p-6 sm:p-7 text-white shadow-xl space-y-5 border border-indigo-900/50">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[11px] font-bold tracking-wide uppercase">
+                    <Sparkles className="w-3.5 h-3.5 text-blue-300 animate-pulse" />
+                    Official SLS Prospect Format v2.0
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                    Standard Higher Education &amp; B2B Import Template
+                  </h3>
+                  <p className="text-xs text-slate-300 max-w-xl">
+                    Pre-configured with all CRM fields, auto-duplicate detection rules, and verified sample rows (Symbiosis, Amity, MIT WPU, DY Patil).
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleDownloadSampleCsv}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black shadow-lg shadow-emerald-500/20 cursor-pointer transition transform hover:-translate-y-0.5"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download CSV
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleDownloadSampleTemplate}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black shadow-lg shadow-blue-600/20 cursor-pointer transition transform hover:-translate-y-0.5"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    Download Excel (.xlsx)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCopyHeaders}
+                    className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 text-xs font-bold transition cursor-pointer backdrop-blur-xs"
+                    title="Copy standard headers to paste in Google Sheets"
+                  >
+                    {copiedHeaders ? (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span className="text-emerald-300 font-bold">Headers Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4 text-slate-300" />
+                        <span>Copy Headers</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Instead of adding prospects one-by-one manually, download the <strong>SLS CSV Template</strong> below, copy-paste your prospect list from Google Sheets or Excel, and upload here. The CRM automatically detects duplicates (by phone, email, and website), assigns unique codes (e.g. <code className="font-mono font-bold text-blue-700">SLS-2026-0045</code>), and uploads hundreds of prospects to Supabase PostgreSQL in a single click.
-              </p>
-              <div className="flex items-center gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={handleDownloadSampleCsv}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold shadow-xs cursor-pointer transition"
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  Download CSV Template (.csv)
-                </button>
-                <a
-                  href="/templates/SLS_Prospects_Bulk_Import_Template.csv"
-                  download="SLS_Prospects_Bulk_Import_Template.csv"
-                  className="text-[11px] font-bold text-blue-600 hover:underline"
-                >
-                  Direct CSV File Link &rarr;
-                </a>
+
+              {/* Live Interactive Sample Table Preview */}
+              <div className="bg-slate-950/60 rounded-2xl border border-white/10 p-3 sm:p-4 backdrop-blur-md space-y-2.5">
+                <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
+                  <span className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-slate-300">
+                    <Table className="w-3.5 h-3.5 text-blue-400" />
+                    Template Live Preview (Pre-filled Sample Institutions)
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium">Scroll horizontally to view all columns &rarr;</span>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border border-white/5 bg-slate-900/80">
+                  <table className="w-full text-left text-[11px] text-slate-300 whitespace-nowrap">
+                    <thead className="bg-white/5 uppercase text-[9px] font-black tracking-wider text-slate-400 border-b border-white/10">
+                      <tr>
+                        <th className="py-2.5 px-3">Company / Institution <span className="text-rose-400 font-bold">*</span></th>
+                        <th className="py-2.5 px-3">Contact Person <span className="text-rose-400 font-bold">*</span></th>
+                        <th className="py-2.5 px-3">Designation</th>
+                        <th className="py-2.5 px-3">Phone <span className="text-rose-400 font-bold">*</span></th>
+                        <th className="py-2.5 px-3">WhatsApp</th>
+                        <th className="py-2.5 px-3">City, State</th>
+                        <th className="py-2.5 px-3">Industry</th>
+                        <th className="py-2.5 px-3">Lead Source</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 font-medium">
+                      <tr className="hover:bg-white/5 transition">
+                        <td className="py-2 px-3 font-bold text-white flex items-center gap-1.5">
+                          <Building2 className="w-3 h-3 text-blue-400 shrink-0" />
+                          Symbiosis Inst. of Tech.
+                        </td>
+                        <td className="py-2 px-3 text-slate-200">Dr. Rajesh Sharma</td>
+                        <td className="py-2 px-3 text-slate-400">Director - Admissions</td>
+                        <td className="py-2 px-3 font-mono text-emerald-300">+91 98220 11223</td>
+                        <td className="py-2 px-3 font-mono text-emerald-400">+91 98220 11223</td>
+                        <td className="py-2 px-3">Pune, Maharashtra</td>
+                        <td className="py-2 px-3">
+                          <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-bold border border-blue-500/30">
+                            Higher Education
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-slate-300 font-semibold">Google Maps</td>
+                      </tr>
+                      <tr className="hover:bg-white/5 transition">
+                        <td className="py-2 px-3 font-bold text-white flex items-center gap-1.5">
+                          <Building2 className="w-3 h-3 text-indigo-400 shrink-0" />
+                          Amity Global Business School
+                        </td>
+                        <td className="py-2 px-3 text-slate-200">Prof. Neha Verma</td>
+                        <td className="py-2 px-3 text-slate-400">Dean of Admissions</td>
+                        <td className="py-2 px-3 font-mono text-emerald-300">+91 98110 99887</td>
+                        <td className="py-2 px-3 font-mono text-emerald-400">+91 98110 99887</td>
+                        <td className="py-2 px-3">Noida, Uttar Pradesh</td>
+                        <td className="py-2 px-3">
+                          <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-bold border border-purple-500/30">
+                            Management Edu
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-slate-300 font-semibold">LinkedIn</td>
+                      </tr>
+                      <tr className="hover:bg-white/5 transition">
+                        <td className="py-2 px-3 font-bold text-white flex items-center gap-1.5">
+                          <Building2 className="w-3 h-3 text-amber-400 shrink-0" />
+                          MIT World Peace University
+                        </td>
+                        <td className="py-2 px-3 text-slate-200">Mr. Vikram Joshi</td>
+                        <td className="py-2 px-3 text-slate-400">Head of Outreach</td>
+                        <td className="py-2 px-3 font-mono text-emerald-300">+91 99220 33445</td>
+                        <td className="py-2 px-3 font-mono text-emerald-400">+91 99220 33445</td>
+                        <td className="py-2 px-3">Pune, Maharashtra</td>
+                        <td className="py-2 px-3">
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30">
+                            Engineering &amp; Tech
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-slate-300 font-semibold">Referral</td>
+                      </tr>
+                      <tr className="hover:bg-white/5 transition">
+                        <td className="py-2 px-3 font-bold text-white flex items-center gap-1.5">
+                          <Building2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                          DY Patil Int. University
+                        </td>
+                        <td className="py-2 px-3 text-slate-200">Dr. Sunita Kulkarni</td>
+                        <td className="py-2 px-3 text-slate-400">Dean - Alliances</td>
+                        <td className="py-2 px-3 font-mono text-emerald-300">+91 98901 23456</td>
+                        <td className="py-2 px-3 font-mono text-emerald-400">+91 98901 23456</td>
+                        <td className="py-2 px-3">Pune, Maharashtra</td>
+                        <td className="py-2 px-3">
+                          <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-bold border border-blue-500/30">
+                            Higher Education
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-slate-300 font-semibold">Website</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Column Guidelines & Rules Footer */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-[10px] text-slate-400">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-rose-400 inline-block" />
+                      <strong className="text-slate-300">Mandatory:</strong> Company Name, Contact Person, Phone
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                      <strong className="text-slate-300">Auto-Deduplicated:</strong> Phone, WhatsApp, Website
+                    </span>
+                  </div>
+                  <span className="text-slate-400 italic">
+                    Accepts both Title Case (&quot;Company Name&quot;) and camelCase (&quot;companyName&quot;) headers.
+                  </span>
+                </div>
               </div>
             </div>
 
