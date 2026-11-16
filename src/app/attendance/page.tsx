@@ -1045,11 +1045,13 @@ export default function AttendancePage() {
                           }`}
                         >
                           {member.status === 'NOT_MARKED'
-                            ? 'Not Checked In'
+                            ? 'Shift Active / In Progress'
                             : member.status === 'LEAVE'
                             ? 'Approved Leave'
                             : member.status === 'HALF_DAY'
                             ? 'Half Day'
+                            : member.status === 'ABSENT'
+                            ? 'Absent (Auto)'
                             : member.status}
                         </span>
                       </td>
@@ -1527,7 +1529,7 @@ export default function AttendancePage() {
                     <CalendarCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-slate-900">Mark Staff Leave / Absence</h3>
+                    <h3 className="text-base font-black text-slate-900">Mark Staff Leave / Half-Day</h3>
                     <p className="text-[11px] text-slate-500">Executive authorization panel for Managing Director (MD) &amp; CEO</p>
                   </div>
                 </div>
@@ -1561,49 +1563,40 @@ export default function AttendancePage() {
                 </select>
               </div>
 
-              {/* Leave Type Selector */}
+              {/* Leave Type Selector (CEO & MD only mark Leave & Half-Day; Absents are auto-logged) */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Attendance / Leave Type <span className="text-rose-500">*</span>
+                  Absence Authorization Type <span className="text-rose-500">*</span>
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2.5">
                   <button
                     type="button"
                     onClick={() => setLeaveForm({ ...leaveForm, leaveType: 'LEAVE' })}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                       leaveForm.leaveType === 'LEAVE'
                         ? 'bg-purple-50 border-purple-500 text-purple-700 ring-2 ring-purple-500/20 shadow-xs'
                         : 'border-slate-200 hover:border-slate-300 text-slate-600'
                     }`}
                   >
                     <span className="w-2 h-2 rounded-full bg-purple-600" />
-                    <span>Approved Leave</span>
+                    <span>Approved Leave (Full Day)</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setLeaveForm({ ...leaveForm, leaveType: 'HALF_DAY' })}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                       leaveForm.leaveType === 'HALF_DAY'
                         ? 'bg-sky-50 border-sky-500 text-sky-700 ring-2 ring-sky-500/20 shadow-xs'
                         : 'border-slate-200 hover:border-slate-300 text-slate-600'
                     }`}
                   >
                     <span className="w-2 h-2 rounded-full bg-sky-600" />
-                    <span>Half Day</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLeaveForm({ ...leaveForm, leaveType: 'ABSENT' })}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                      leaveForm.leaveType === 'ABSENT'
-                        ? 'bg-rose-50 border-rose-500 text-rose-700 ring-2 ring-rose-500/20 shadow-xs'
-                        : 'border-slate-200 hover:border-slate-300 text-slate-600'
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full bg-rose-600" />
-                    <span>Mark Absent</span>
+                    <span>Half Day Leave</span>
                   </button>
                 </div>
+                <p className="text-[10px] text-slate-400 mt-1.5 italic">
+                  Note: Absents are automatically logged by the system when a work shift ends without check-in.
+                </p>
               </div>
 
               {/* Single Day vs Date Range Toggle */}

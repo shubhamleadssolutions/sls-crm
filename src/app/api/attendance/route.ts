@@ -195,8 +195,30 @@ export async function GET(req: Request) {
     // Days prior to Monday, Nov 16, 2026 are not counted as absent.
     const officialTrackingStartDate = new Date(2026, 10, 16); // Monday, 16 Nov 2026
     let totalAbsent = 0;
+
+    const isPastMonth = filterYear < istYear || (filterYear === istYear && filterMonth < istMonth);
     const isCurrentMonth = filterYear === istYear && filterMonth === istMonth;
-    const maxDayToCheck = isCurrentMonth ? istDay : lastDayOfMonth;
+    const isFutureMonth = filterYear > istYear || (filterYear === istYear && filterMonth > istMonth);
+
+    // CRITICAL FIX: Future months must NEVER show absent days!
+    let maxDayToCheck = 0;
+    if (isPastMonth) {
+      maxDayToCheck = lastDayOfMonth;
+    } else if (isCurrentMonth) {
+      maxDayToCheck = istDay;
+    } else {
+      // Future month: 0 days to check -> totalAbsent is strictly 0
+      maxDayToCheck = 0;
+    }
+
+    const nowIST = getISTDate(now);
+    const istCurrentHour = nowIST.getHours();
+    const istCurrentMinute = nowIST.getMinutes();
+
+    // Check if current user's shift has ended today
+    const shiftEndedToday =
+      istCurrentHour > shiftConfig.endHour ||
+      (istCurrentHour === shiftConfig.endHour && istCurrentMinute >= shiftConfig.endMinute);
 
     for (let day = 1; day <= maxDayToCheck; day++) {
       const checkDateIST = new Date(filterYear, filterMonth - 1, day);
@@ -211,11 +233,16 @@ export async function GET(req: Request) {
         continue;
       }
 
-      // If today is ongoing, don't mark today as absent if shift hasn't ended
-      if (isCurrentMonth && day === istDay && !attendanceByDate[dateKey]) {
-        continue;
+      // If today is ongoing in the current month:
+      // "absent automatically mark ho jana chahiye after end of the day."
+      // If shift has NOT ended yet, do not mark absent
+      if (isCurrentMonth && day === istDay) {
+        if (!shiftEndedToday || attendanceByDate[dateKey]) {
+          continue;
+        }
       }
 
+      // If no attendance record exists (not punched in, and no approved leave or half-day):
       if (!attendanceByDate[dateKey]) {
         totalAbsent++;
         attendanceByDate[dateKey] = {
@@ -277,6 +304,23 @@ export async function GET(req: Request) {
       staffAttendance = allUsers.map((u) => {
         const att = staffMap.get(u.id);
         const userShift = getShiftConfigForRole(u.role);
+
+        let finalStatus = att ? att.status : 'NOT_MARKED';
+
+        // Automatic Absent marking after shift ends / end of the day:
+        if (!att) {
+          const userShiftEnded =
+            istCurrentHour > userShift.endHour ||
+            (istCurrentHour === userShift.endHour && istCurrentMinute >= userShift.endMinute);
+
+          const isSunday = nowIST.getDay() === 0;
+          const isAfterStart = now >= officialTrackingStartDate;
+
+          if (userShiftEnded && !isSunday && isAfterStart) {
+            finalStatus = 'ABSENT';
+          }
+        }
+
         return {
           userId: u.id,
           name: u.name,
@@ -284,7 +328,7 @@ export async function GET(req: Request) {
           role: u.role,
           designation: u.designation,
           shiftTiming: `${userShift.shiftStart} – ${userShift.shiftEnd}`,
-          status: att ? att.status : 'NOT_MARKED',
+          status: finalStatus,
           punchIn: att?.punchIn || null,
           punchOut: att?.punchOut || null,
           workingHours: att?.workingHours ? Number(att.workingHours) : null,
@@ -513,12 +557,9 @@ export async function POST(req: Request) {
         datesToMark.push(new Date(s));
       }
 
-      const leaveLabel =
-        leaveType === 'HALF_DAY'
-          ? 'Half Day Leave'
-          : leaveType === 'ABSENT'
-          ? 'Marked Absent'
-          : 'Approved Leave';
+      // CEO and MD only mark Approved Leave or Half Day (Absents are automatically logged by system)
+      const normalizedLeaveType = leaveType === 'HALF_DAY' ? 'HALF_DAY' : 'LEAVE';
+      const leaveLabel = normalizedLeaveType === 'HALF_DAY' ? 'Half Day Leave' : 'Approved Leave';
 
       const leaveNote = reason?.trim()
         ? `[${leaveLabel} by ${sessionUser.name} (${sessionUser.role})] ${reason.trim()}`
@@ -541,14 +582,14 @@ export async function POST(req: Request) {
           await prisma.attendance.update({
             where: { id: existing.id },
             data: {
-              status: leaveType,
+              status: normalizedLeaveType,
               date: dStart,
               punchIn: dStart,
               punchOut: dEnd,
               plannedTasks: leaveNote,
               workDone: leaveNote,
               notes: leaveNote,
-              workingHours: leaveType === 'HALF_DAY' ? 4.0 : 0,
+              workingHours: normalizedLeaveType === 'HALF_DAY' ? 4.0 : 0,
             },
           });
         } else {
@@ -558,11 +599,11 @@ export async function POST(req: Request) {
               date: dStart,
               punchIn: dStart,
               punchOut: dEnd,
-              status: leaveType,
+              status: normalizedLeaveType,
               plannedTasks: leaveNote,
               workDone: leaveNote,
               notes: leaveNote,
-              workingHours: leaveType === 'HALF_DAY' ? 4.0 : 0,
+              workingHours: normalizedLeaveType === 'HALF_DAY' ? 4.0 : 0,
             },
           });
         }
@@ -574,7 +615,7 @@ export async function POST(req: Request) {
           action: 'LEAVE_RECORDED',
           entityType: 'Attendance',
           entityId: targetUser.id,
-          details: `${sessionUser.name} marked ${leaveType} for ${targetUser.name} (@${targetUser.username}) for ${datesToMark.length} day(s) starting ${startDate}: ${reason || 'Executive update'}`,
+          details: `${sessionUser.name} marked ${normalizedLeaveType} for ${targetUser.name} (@${targetUser.username}) for ${datesToMark.length} day(s) starting ${startDate}: ${reason || 'Executive update'}`,
         },
       });
 
