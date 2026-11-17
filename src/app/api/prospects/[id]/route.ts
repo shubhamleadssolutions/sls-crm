@@ -124,9 +124,21 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       statusChanged = true;
     }
 
-    // Assignment change (Admins can reassign)
-    if (assignedUserId !== undefined && user.role === 'ADMIN') {
-      data.assignedUserId = assignedUserId || null;
+    // Assignment change: ONLY CEO and Managing Director (MD) can assign or reassign prospects!
+    const isExecutive = user.role === 'ADMIN' || user.role === 'CEO';
+    let assignmentChanged = false;
+    if (assignedUserId !== undefined) {
+      if (!isExecutive) {
+        return NextResponse.json(
+          { error: 'Forbidden: Only CEO and Managing Director (MD) have permission to assign or reassign prospects.' },
+          { status: 403 }
+        );
+      }
+      const newAssignedId = assignedUserId || null;
+      if (newAssignedId !== existing.assignedUserId) {
+        data.assignedUserId = newAssignedId;
+        assignmentChanged = true;
+      }
     }
 
     if (nextFollowUpDate !== undefined) {
@@ -139,6 +151,39 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       where: { id: params.id },
       data,
     });
+
+    // If assignment changed by CEO or MD, record activity & audit log
+    if (assignmentChanged) {
+      const assignedTarget = data.assignedUserId
+        ? await prisma.user.findUnique({
+            where: { id: data.assignedUserId },
+            select: { name: true, role: true, designation: true },
+          })
+        : null;
+      const targetLabel = assignedTarget
+        ? `${assignedTarget.name} (${assignedTarget.designation || assignedTarget.role})`
+        : 'Unassigned';
+
+      await prisma.activity.create({
+        data: {
+          prospectId: updated.id,
+          channel: 'OTHER',
+          activity: `Prospect assigned to ${targetLabel}`,
+          result: `Assigned by ${user.name} (${user.role})`,
+          userId: user.id,
+        },
+      });
+
+      await prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'PROSPECT_REASSIGNED',
+          entityType: 'Prospect',
+          entityId: updated.id,
+          details: `${user.name} (${user.role}) reassigned prospect "${updated.companyName}" to ${targetLabel}`,
+        },
+      });
+    }
 
     // If status changed, record in activity timeline & audit log
     if (statusChanged) {

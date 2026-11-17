@@ -21,12 +21,15 @@ import {
   Calendar,
   X,
   FileSpreadsheet,
+  UserCheck,
+  ShieldCheck,
 } from 'lucide-react';
 import { formatDate, STATUS_LABELS, LEAD_SOURCE_LABELS } from '@/lib/utils';
 
 function ProspectsContent() {
   const [prospects, setProspects] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   // Filters state
@@ -34,6 +37,14 @@ function ProspectsContent() {
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [selectedSource, setSelectedSource] = useState('ALL');
   const [selectedCity, setSelectedCity] = useState('');
+  const [selectedAssignee, setSelectedAssignee] = useState('ALL');
+
+  // Quick Reassign Modal (CEO & MD Only)
+  const [reassignProspect, setReassignProspect] = useState<any | null>(null);
+  const [targetUserId, setTargetUserId] = useState('');
+  const [reassigning, setReassigning] = useState(false);
+
+  const isExecutive = currentUser?.role === 'ADMIN' || currentUser?.role === 'CEO';
 
   const fetchProspects = useCallback(async () => {
     setLoading(true);
@@ -43,6 +54,7 @@ function ProspectsContent() {
       if (selectedStatus !== 'ALL') params.set('status', selectedStatus);
       if (selectedSource !== 'ALL') params.set('source', selectedSource);
       if (selectedCity) params.set('city', selectedCity);
+      if (selectedAssignee !== 'ALL') params.set('assignedUserId', selectedAssignee);
 
       const res = await fetch(`/api/prospects?${params.toString()}`);
       const data = await res.json();
@@ -52,16 +64,26 @@ function ProspectsContent() {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, selectedStatus, selectedSource, selectedCity]);
+  }, [searchTerm, selectedStatus, selectedSource, selectedCity, selectedAssignee]);
 
   useEffect(() => {
     fetchProspects();
   }, [fetchProspects]);
 
   useEffect(() => {
-    fetch('/api/users')
+    fetch('/api/auth/me')
       .then((res) => res.json())
-      .then((d) => setUsers(d.users || []))
+      .then((d) => {
+        if (d.user) {
+          setCurrentUser(d.user);
+          if (d.user.role === 'ADMIN' || d.user.role === 'CEO') {
+            fetch('/api/users')
+              .then((res) => res.json())
+              .then((data) => setUsers(data.users || []))
+              .catch(console.error);
+          }
+        }
+      })
       .catch(console.error);
   }, []);
 
@@ -70,8 +92,35 @@ function ProspectsContent() {
     params.set('format', format);
     if (selectedStatus !== 'ALL') params.set('status', selectedStatus);
     if (selectedSource !== 'ALL') params.set('source', selectedSource);
+    if (selectedAssignee !== 'ALL') params.set('assignedUserId', selectedAssignee);
 
     window.open(`/api/prospects/export?${params.toString()}`, '_blank');
+  };
+
+  const handleExecuteReassign = async () => {
+    if (!reassignProspect) return;
+    try {
+      setReassigning(true);
+      const res = await fetch(`/api/prospects/${reassignProspect.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assignedUserId: targetUserId === 'UNASSIGNED' ? null : targetUserId,
+        }),
+      });
+
+      if (res.ok) {
+        setReassignProspect(null);
+        fetchProspects();
+      } else {
+        const d = await res.json();
+        alert(d.error || 'Failed to reassign prospect');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error occurred while reassigning lead');
+    } finally {
+      setReassigning(false);
+    }
   };
 
   const clearFilters = () => {
@@ -79,6 +128,7 @@ function ProspectsContent() {
     setSelectedStatus('ALL');
     setSelectedSource('ALL');
     setSelectedCity('');
+    setSelectedAssignee('ALL');
   };
 
   return (
@@ -96,9 +146,21 @@ function ProspectsContent() {
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
               {prospects.length} Total
             </span>
+            {isExecutive ? (
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" />
+                CEO &amp; MD Access
+              </span>
+            ) : (
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                Assigned to you
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Search, filter, track outreach, and manage client accounts with full data transparency.
+            {isExecutive
+              ? 'Executive oversight: Assign, reassign, search, and track all prospects across the workforce.'
+              : 'View and manage prospects assigned to you with live activity tracking.'}
           </p>
         </div>
 
@@ -154,7 +216,7 @@ function ProspectsContent() {
 
       {/* Filter and Search Bar */}
       <div className="bg-white p-4 rounded-3xl border border-slate-200/90 shadow-xs space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${isExecutive ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-3`}>
           {/* Search Input */}
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
@@ -210,10 +272,29 @@ function ProspectsContent() {
               className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition"
             />
           </div>
+
+          {/* Executive Assignee Filter (CEO & MD Only) */}
+          {isExecutive && (
+            <div>
+              <select
+                value={selectedAssignee}
+                onChange={(e) => setSelectedAssignee(e.target.value)}
+                className="w-full px-3 py-2 bg-indigo-50/70 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 transition"
+              >
+                <option value="ALL">All Assignees (Workforce)</option>
+                <option value="UNASSIGNED">Unassigned Leads</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    Assigned: {u.name} ({u.role})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Clear Filters Indicator */}
-        {(searchTerm || selectedStatus !== 'ALL' || selectedSource !== 'ALL' || selectedCity) && (
+        {(searchTerm || selectedStatus !== 'ALL' || selectedSource !== 'ALL' || selectedCity || (isExecutive && selectedAssignee !== 'ALL')) && (
           <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
             <span className="text-slate-500 font-medium">Active filters applied</span>
             <button
@@ -324,8 +405,28 @@ function ProspectsContent() {
                           {statusInfo.label}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-slate-700 font-medium">
-                        {p.assignedUser?.name || 'Unassigned'}
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-800 font-semibold">
+                            {p.assignedUser?.name || <span className="text-amber-600 italic font-normal">Unassigned</span>}
+                          </span>
+                          {isExecutive && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setReassignProspect(p);
+                                setTargetUserId(p.assignedUserId || '');
+                              }}
+                              className="p-1 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition cursor-pointer"
+                              title="Reassign prospect"
+                            >
+                              <UserCheck className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                        {p.assignedUser?.role && (
+                          <span className="text-[10px] text-slate-400 block">{p.assignedUser.role}</span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4">
                         {p.nextFollowUpDate ? (
@@ -353,6 +454,84 @@ function ProspectsContent() {
           )}
         </div>
       </div>
+
+      {/* CEO & MD Reassign Prospect Modal */}
+      {reassignProspect && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                  <UserCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Assign / Reassign Lead</h3>
+                  <p className="text-[11px] text-slate-500">Executive authority (CEO &amp; MD)</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setReassignProspect(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-1">
+                <p className="text-[11px] text-slate-400 uppercase font-semibold">Prospect</p>
+                <p className="font-bold text-slate-800 text-sm">{reassignProspect.companyName}</p>
+                <p className="text-slate-500">
+                  Contact: <span className="font-medium text-slate-700">{reassignProspect.contactPerson || '-'}</span> | Status: <span className="font-medium text-slate-700">{reassignProspect.status}</span>
+                </p>
+                <p className="text-slate-500">
+                  Current Assignee: <span className="font-semibold text-indigo-700">{reassignProspect.assignedUser?.name || 'Unassigned'}</span>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Select New Staff Member / Assignee
+                </label>
+                <select
+                  value={targetUserId}
+                  onChange={(e) => setTargetUserId(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 transition"
+                >
+                  <option value="">Leave Unassigned</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.role}) — {u.email}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Assigning will transfer this lead and future follow-ups to the selected team member.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setReassignProspect(null)}
+                disabled={reassigning}
+                className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteReassign}
+                disabled={reassigning}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {reassigning ? 'Reassigning...' : 'Save Assignment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -21,10 +21,13 @@ import { STATUS_LABELS, LEAD_SOURCE_LABELS } from '@/lib/utils';
 
 export default function NewProspectPage() {
   const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+
+  const isExecutive = currentUser?.role === 'ADMIN' || currentUser?.role === 'CEO';
 
   const [form, setForm] = useState({
     companyName: '',
@@ -56,6 +59,13 @@ export default function NewProspectPage() {
   });
 
   useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((d) => {
+        if (d?.user) setCurrentUser(d.user);
+      })
+      .catch(console.error);
+
     fetch('/api/users')
       .then((res) => res.json())
       .then((d) => setUsers(d.users || []))
@@ -388,20 +398,38 @@ export default function NewProspectPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Assigned User</label>
-                <select
-                  name="assignedUserId"
-                  value={form.assignedUserId}
-                  onChange={handleChange}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:ring-2 focus:ring-blue-600"
-                >
-                  <option value="">Default (Abhinav - Managing Director)</option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name} ({u.designation || u.role})
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Assigned Staff Member</span>
+                  {isExecutive ? (
+                    <span className="text-[10px] text-indigo-700 font-bold bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+                      CEO &amp; MD Only
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-500 font-medium">Auto-assigned</span>
+                  )}
+                </label>
+                {isExecutive ? (
+                  <select
+                    name="assignedUserId"
+                    value={form.assignedUserId}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2.5 bg-indigo-50/60 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-950 focus:bg-white focus:ring-2 focus:ring-indigo-600"
+                  >
+                    <option value="">Default (Unassigned / Managing Director)</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.role}) — {u.email}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 flex items-center justify-between">
+                    <span>
+                      Assigned to: <strong className="font-bold text-slate-900">{currentUser?.name || 'You'}</strong>
+                    </span>
+                    <span className="text-[10px] text-slate-400">Created by you</span>
+                  </div>
+                )}
               </div>
 
               <div className="sm:col-span-3">

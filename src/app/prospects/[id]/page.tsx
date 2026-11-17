@@ -27,6 +27,8 @@ import {
   Copy,
   ChevronRight,
   X,
+  UserCheck,
+  ShieldCheck,
 } from 'lucide-react';
 import { formatDate, formatDateTime, STATUS_LABELS, LEAD_SOURCE_LABELS, CHANNEL_LABELS } from '@/lib/utils';
 
@@ -35,6 +37,8 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
   const [prospect, setProspect] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [users, setUsers] = useState<any[]>([]);
 
   // Modals state
   const [showActivityModal, setShowActivityModal] = useState(false);
@@ -43,14 +47,19 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [showReassignModal, setShowReassignModal] = useState(false);
+  const [selectedAssigneeId, setSelectedAssigneeId] = useState('');
+  const [reassigning, setReassigning] = useState(false);
   const [pendingStatusConfirm, setPendingStatusConfirm] = useState<string | null>(null);
 
   // Forms state
   const [activityForm, setActivityForm] = useState({ channel: 'WHATSAPP', activity: '', result: '', notes: '' });
-  const [followUpForm, setFollowUpForm] = useState({ scheduledDate: '', type: 'WHATSAPP', notes: '' });
+  const [followUpForm, setFollowUpForm] = useState({ scheduledDate: '', type: 'WHATSAPP', notes: '', targetUserId: '' });
   const [noteContent, setNoteContent] = useState('');
   const [convertForm, setConvertForm] = useState({ service: '', contractType: 'Monthly Retainer', retainerAmount: '', campaignStatus: 'Active' });
   const [selectedTemplateText, setSelectedTemplateText] = useState('');
+
+  const isExecutive = currentUser?.role === 'ADMIN' || currentUser?.role === 'CEO';
 
   const fetchProspect = useCallback(async () => {
     try {
@@ -74,7 +83,45 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
       .then((res) => res.json())
       .then((d) => setTemplates(d.templates || []))
       .catch(console.error);
+
+    fetch('/api/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((d) => {
+        if (d?.user) setCurrentUser(d.user);
+      })
+      .catch(console.error);
+
+    fetch('/api/users')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((d) => {
+        if (d?.users) setUsers(d.users);
+      })
+      .catch(console.error);
   }, [fetchProspect]);
+
+  const handleExecuteReassign = async () => {
+    if (!prospect) return;
+    setReassigning(true);
+    try {
+      const res = await fetch(`/api/prospects/${params.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignedUserId: selectedAssigneeId || null }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        alert(d.error || 'Failed to reassign prospect');
+        return;
+      }
+      setShowReassignModal(false);
+      fetchProspect();
+    } catch (err) {
+      console.error(err);
+      alert('Error reassigning prospect');
+    } finally {
+      setReassigning(false);
+    }
+  };
 
   const handleStatusChange = async (newStatus: string) => {
     if (['LOST', 'NOT_INTERESTED', 'NO_RESPONSE'].includes(newStatus)) {
@@ -140,7 +187,7 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
         body: JSON.stringify(followUpForm),
       });
       setShowFollowUpModal(false);
-      setFollowUpForm({ scheduledDate: '', type: 'WHATSAPP', notes: '' });
+      setFollowUpForm({ scheduledDate: '', type: 'WHATSAPP', notes: '', targetUserId: '' });
       fetchProspect();
     } catch (err) {
       console.error(err);
@@ -277,8 +324,28 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
               </div>
 
               <div className="flex flex-wrap items-center gap-4 mt-2.5 text-xs text-slate-500">
-                <span>
-                  Assigned to: <strong className="text-slate-700">{prospect.assignedUser?.name || 'Abhinav (Managing Director)'}</strong>
+                <span className="flex items-center gap-1.5">
+                  <span>Assigned to:</span>
+                  <strong className="text-slate-800 font-bold">
+                    {prospect.assignedUser?.name || <span className="text-amber-600 font-normal italic">Unassigned</span>}
+                  </strong>
+                  {prospect.assignedUser?.role && (
+                    <span className="text-[10px] text-slate-400 font-medium">({prospect.assignedUser.role})</span>
+                  )}
+                  {isExecutive && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedAssigneeId(prospect.assignedUserId || '');
+                        setShowReassignModal(true);
+                      }}
+                      className="ml-1.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] transition border border-indigo-200 cursor-pointer shadow-2xs"
+                      title="Assign or reassign this prospect (CEO & MD only)"
+                    >
+                      <UserCheck className="w-3 h-3" />
+                      Reassign
+                    </button>
+                  )}
                 </span>
                 <span>&bull;</span>
                 <span>
@@ -796,6 +863,30 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"
                   />
                 </div>
+
+                {isExecutive && (
+                  <div>
+                    <label className="block text-xs font-bold text-indigo-900 mb-1 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+                      Whose Follow-up? (Assign Follow-up &amp; Lead)
+                    </label>
+                    <select
+                      value={followUpForm.targetUserId}
+                      onChange={(e) => setFollowUpForm({ ...followUpForm, targetUserId: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-indigo-50/70 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 transition"
+                    >
+                      <option value="">Keep current assignee ({prospect.assignedUser?.name || 'Unassigned'})</option>
+                      {users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          Assign to: {u.name} ({u.role})
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      As CEO/MD, delegating this follow-up also updates the prospect&apos;s assignee.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-end gap-2 p-4 pt-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
@@ -1021,6 +1112,84 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
                   className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                 >
                   Confirm Change
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Executive Reassign Lead Modal (CEO & MD Only) */}
+        {showReassignModal && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setShowReassignModal(false)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-md bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                    <UserCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Assign / Reassign Lead</h3>
+                    <p className="text-[11px] text-slate-500">Executive authority (CEO &amp; MD)</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowReassignModal(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-1">
+                  <p className="text-[11px] text-slate-400 uppercase font-semibold">Prospect</p>
+                  <p className="font-bold text-slate-800 text-sm">{prospect.companyName}</p>
+                  <p className="text-slate-500">
+                    Contact: <span className="font-medium text-slate-700">{prospect.contactPerson || '-'}</span> | Status: <span className="font-medium text-slate-700">{prospect.status}</span>
+                  </p>
+                  <p className="text-slate-500">
+                    Current Assignee: <span className="font-semibold text-indigo-700">{prospect.assignedUser?.name || 'Unassigned'}</span>
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Select New Staff Member / Assignee
+                  </label>
+                  <select
+                    value={selectedAssigneeId}
+                    onChange={(e) => setSelectedAssigneeId(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 transition"
+                  >
+                    <option value="">Leave Unassigned</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.role}) — {u.email}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Assigning transfers this lead, scheduled follow-ups, and pipeline ownership to the selected team member.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowReassignModal(false)}
+                  disabled={reassigning}
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExecuteReassign}
+                  disabled={reassigning}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {reassigning ? 'Saving...' : 'Save Assignment'}
                 </button>
               </div>
             </div>

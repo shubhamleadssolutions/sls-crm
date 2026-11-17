@@ -9,7 +9,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { scheduledDate, type, notes, markCompleted } = await req.json();
+    const isExecutive = user.role === 'ADMIN' || user.role === 'CEO';
+    const { scheduledDate, type, notes, markCompleted, targetUserId } = await req.json();
 
     const prospect = await prisma.prospect.findUnique({
       where: { id: params.id },
@@ -49,6 +50,17 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return NextResponse.json({ error: 'Scheduled date is required' }, { status: 400 });
     }
 
+    // Only CEO and MD can assign a follow-up to another team member
+    const assignedUserForFollowUp = isExecutive && targetUserId ? targetUserId : user.id;
+
+    let targetUserInfo = null;
+    if (isExecutive && targetUserId && targetUserId !== user.id) {
+      targetUserInfo = await prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: { name: true, role: true },
+      });
+    }
+
     // Schedule new follow-up
     const followUp = await prisma.followUp.create({
       data: {
@@ -56,27 +68,37 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         scheduledDate: new Date(scheduledDate),
         type: type || 'WHATSAPP',
         notes: notes?.trim() || null,
-        userId: user.id,
+        userId: assignedUserForFollowUp,
       },
     });
 
-    // Also update current on prospect
+    // Also update current on prospect (and reassign prospect if CEO/MD assigned to someone)
+    const prospectUpdateData: any = {
+      nextFollowUpDate: new Date(scheduledDate),
+      followUpType: type || 'WHATSAPP',
+      followUpNotes: notes?.trim() || null,
+      followUpCount: { increment: 1 },
+    };
+
+    if (isExecutive && targetUserId) {
+      prospectUpdateData.assignedUserId = targetUserId;
+    }
+
     const updated = await prisma.prospect.update({
       where: { id: params.id },
-      data: {
-        nextFollowUpDate: new Date(scheduledDate),
-        followUpType: type || 'WHATSAPP',
-        followUpNotes: notes?.trim() || null,
-        followUpCount: { increment: 1 },
-      },
+      data: prospectUpdateData,
     });
+
+    const activityNote = targetUserInfo
+      ? `Follow-up assigned to ${targetUserInfo.name} for ${new Date(scheduledDate).toLocaleDateString('en-IN')}`
+      : `Follow-up scheduled for ${new Date(scheduledDate).toLocaleDateString('en-IN')}`;
 
     // Add activity timeline item
     await prisma.activity.create({
       data: {
         prospectId: params.id,
         channel: type || 'WHATSAPP',
-        activity: `Follow-up scheduled for ${new Date(scheduledDate).toLocaleDateString()}`,
+        activity: activityNote,
         result: notes?.trim() || 'Pending',
         userId: user.id,
       },

@@ -13,9 +13,21 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const filterUserId = searchParams.get('userId');
 
-    // If BD_INTERN, restrict to their assigned prospects by default unless admin
-    const isIntern = user.role === 'BD_INTERN';
-    const assignedFilter = isIntern ? { assignedUserId: user.id } : (filterUserId ? { assignedUserId: filterUserId } : {});
+    // Role-based visibility:
+    // Only CEO and MD (role ADMIN or CEO) can view the whole company's follow-ups/stats or filter by any user.
+    // Non-executive staff can ONLY view their own assigned prospects and follow-ups.
+    const isExecutive = user.role === 'ADMIN' || user.role === 'CEO';
+    let assignedFilter: any = {};
+
+    if (!isExecutive) {
+      assignedFilter = { assignedUserId: user.id };
+    } else if (filterUserId && filterUserId !== 'ALL') {
+      if (filterUserId === 'UNASSIGNED') {
+        assignedFilter = { assignedUserId: null };
+      } else {
+        assignedFilter = { assignedUserId: filterUserId };
+      }
+    }
 
     const baseWhere = {
       isArchived: false,
@@ -60,7 +72,7 @@ export async function GET(req: Request) {
         },
       },
       include: {
-        assignedUser: { select: { id: true, name: true } },
+        assignedUser: { select: { id: true, name: true, username: true, role: true, designation: true } },
       },
       orderBy: { nextFollowUpDate: 'asc' },
     });
@@ -74,14 +86,14 @@ export async function GET(req: Request) {
         },
       },
       include: {
-        assignedUser: { select: { id: true, name: true } },
+        assignedUser: { select: { id: true, name: true, username: true, role: true, designation: true } },
       },
       orderBy: { nextFollowUpDate: 'asc' },
     });
 
     // Recent Activities
     const recentActivities = await prisma.activity.findMany({
-      where: isIntern
+      where: !isExecutive
         ? { prospect: { assignedUserId: user.id } }
         : {},
       take: 10,
@@ -217,6 +229,7 @@ export async function GET(req: Request) {
       recentActivities,
       teamLeaderboard,
       myProgress: myStats,
+      isExecutive,
     });
   } catch (error: any) {
     console.error('Error fetching dashboard stats:', error);

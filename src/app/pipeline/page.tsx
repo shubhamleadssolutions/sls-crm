@@ -53,6 +53,7 @@ const KANBAN_STAGES = [
 ];
 
 function PipelineKanbanContent() {
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,12 +67,15 @@ function PipelineKanbanContent() {
   const [selectedSource, setSelectedSource] = useState('ALL');
   const [selectedUserId, setSelectedUserId] = useState('ALL');
 
+  const isExecutive = currentUser?.role === 'ADMIN' || currentUser?.role === 'CEO';
+
   const fetchProspects = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (searchTerm) params.set('search', searchTerm);
       if (selectedSource !== 'ALL') params.set('source', selectedSource);
+      if (selectedUserId !== 'ALL') params.set('assignedUserId', selectedUserId);
 
       const res = await fetch(`/api/prospects?${params.toString()}`);
       const data = await res.json();
@@ -81,18 +85,25 @@ function PipelineKanbanContent() {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, selectedSource]);
+  }, [searchTerm, selectedSource, selectedUserId]);
 
   useEffect(() => {
-    fetchProspects();
-  }, [fetchProspects]);
+    fetch('/api/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((d) => {
+        if (d?.user) setCurrentUser(d.user);
+      })
+      .catch(console.error);
 
-  useEffect(() => {
     fetch('/api/users')
       .then((res) => res.json())
       .then((d) => setUsers(d.users || []))
       .catch(console.error);
   }, []);
+
+  useEffect(() => {
+    fetchProspects();
+  }, [fetchProspects]);
 
   const handleStatusChange = async (prospectId: string, newStatus: string) => {
     // Optimistic UI update
@@ -195,20 +206,28 @@ function PipelineKanbanContent() {
             />
           </div>
 
-          {/* Assigned Executive Filter */}
+          {/* Assigned Executive Filter (Executive Only) */}
           <div>
-            <select
-              value={selectedUserId}
-              onChange={(e) => setSelectedUserId(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 transition"
-            >
-              <option value="ALL">All Team Members</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name} ({u.designation || u.role})
-                </option>
-              ))}
-            </select>
+            {isExecutive ? (
+              <select
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                className="w-full px-3 py-2 bg-indigo-50/70 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 transition"
+              >
+                <option value="ALL">All Assignees (Workforce)</option>
+                <option value="UNASSIGNED">Unassigned Leads</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} ({u.role})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-between">
+                <span>Assigned: {currentUser?.name || 'You'}</span>
+                <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-full">Personal</span>
+              </div>
+            )}
           </div>
 
           {/* Lead Source Filter */}

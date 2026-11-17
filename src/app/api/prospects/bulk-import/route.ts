@@ -135,6 +135,8 @@ export async function POST(req: Request) {
         currentProspectCount++;
         const prospectCode = `SLS-P-${1000 + currentProspectCount}`;
 
+        const isExecutive = user.role === 'ADMIN' || user.role === 'CEO';
+
         await prisma.prospect.create({
           data: {
             prospectCode,
@@ -148,7 +150,7 @@ export async function POST(req: Request) {
             industry: data.industry || null,
             leadSource: data.leadSource || 'OTHER',
             status: 'NEW_PROSPECT',
-            assignedUserId: user.role === 'BD_INTERN' ? user.id : null,
+            assignedUserId: isExecutive ? null : user.id,
           },
         });
         createdCount++;

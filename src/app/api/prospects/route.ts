@@ -9,12 +9,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const isExecutive = user.role === 'ADMIN' || user.role === 'CEO';
+
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search')?.trim();
     const status = searchParams.get('status');
     const source = searchParams.get('source');
     const assignedUserId = searchParams.get('assignedUserId');
-    const myOnly = searchParams.get('myOnly') === 'true' || user.role === 'BD_INTERN';
     const city = searchParams.get('city');
     const industry = searchParams.get('industry');
 
@@ -22,10 +23,17 @@ export async function GET(req: Request) {
       isArchived: false,
     };
 
-    if (myOnly) {
+    // Role-based visibility:
+    // Only CEO and MD can view all prospects or filter by any assignee.
+    // Non-executive staff can ONLY view prospects assigned to them.
+    if (!isExecutive) {
       where.assignedUserId = user.id;
-    } else if (assignedUserId) {
-      where.assignedUserId = assignedUserId;
+    } else {
+      if (assignedUserId === 'UNASSIGNED') {
+        where.assignedUserId = null;
+      } else if (assignedUserId && assignedUserId !== 'ALL') {
+        where.assignedUserId = assignedUserId;
+      }
     }
 
     if (status && status !== 'ALL') {
@@ -58,7 +66,7 @@ export async function GET(req: Request) {
     const prospects = await prisma.prospect.findMany({
       where,
       include: {
-        assignedUser: { select: { id: true, name: true, role: true } },
+        assignedUser: { select: { id: true, name: true, username: true, role: true, designation: true } },
         _count: {
           select: { activities: true, notes: true, followUps: true },
         },
@@ -66,7 +74,7 @@ export async function GET(req: Request) {
       orderBy: { updatedAt: 'desc' },
     });
 
-    return NextResponse.json({ prospects });
+    return NextResponse.json({ prospects, isExecutive });
   } catch (error: any) {
     console.error('Error fetching prospects:', error);
     return NextResponse.json({ error: 'Failed to fetch prospects' }, { status: 500 });
@@ -118,6 +126,11 @@ export async function POST(req: Request) {
     const count = await prisma.prospect.count();
     const prospectCode = `SLS-P-${1000 + count + 1}`;
 
+    const isExecutive = user.role === 'ADMIN' || user.role === 'CEO';
+    // Only CEO and MD can assign a prospect to any team member.
+    // Non-executive staff can only create prospects assigned to themselves.
+    const finalAssignedUserId = isExecutive ? (assignedUserId || null) : user.id;
+
     const prospect = await prisma.prospect.create({
       data: {
         prospectCode,
@@ -142,7 +155,7 @@ export async function POST(req: Request) {
         potentialRequirement: potentialRequirement?.trim() || null,
         leadSource: leadSource || 'OTHER',
         status: status || 'NEW_PROSPECT',
-        assignedUserId: assignedUserId || (user.role === 'BD_INTERN' ? user.id : null),
+        assignedUserId: finalAssignedUserId,
         nextFollowUpDate: nextFollowUpDate ? new Date(nextFollowUpDate) : null,
         followUpType: followUpType || null,
         followUpNotes: followUpNotes?.trim() || null,
