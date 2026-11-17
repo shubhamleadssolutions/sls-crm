@@ -34,10 +34,11 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      const cleanUsername = username.trim().toLowerCase();
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), password: password.trim() }),
+        body: JSON.stringify({ username: cleanUsername, password }),
       });
 
       const data = await res.json();
@@ -216,6 +217,9 @@ export default function LoginPage() {
                   placeholder="Enter your username"
                   required
                   autoFocus
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
                   className="w-full pl-10 pr-3.5 py-3 bg-slate-50/80 border border-slate-200 rounded-2xl text-xs font-medium text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition"
                 />
               </div>

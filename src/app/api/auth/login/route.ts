@@ -8,16 +8,24 @@ export async function POST(req: Request) {
     const { username, password } = await req.json();
     const deviceInfo = detectDeviceInfo(req);
 
-    const cleanUsername = (username || '').trim();
+    const rawUsername = (username || '').trim();
+    const cleanUsername = rawUsername.toLowerCase();
 
     if (!cleanUsername || !password) {
       return NextResponse.json({ error: 'Username and password are required' }, { status: 400 });
     }
 
-    // Find user strictly by username (email login disabled per policy)
+    // Find user strictly by username (100% case-insensitive lookup)
     const user = await prisma.user.findFirst({
       where: {
-        username: { equals: cleanUsername, mode: 'insensitive' },
+        OR: [
+          { username: cleanUsername },
+          { username: rawUsername },
+          { username: { equals: cleanUsername, mode: 'insensitive' } },
+          { username: { equals: rawUsername, mode: 'insensitive' } },
+          { email: `${cleanUsername}@sls.internal` },
+          { email: { equals: `${cleanUsername}@sls.internal`, mode: 'insensitive' } },
+        ],
       },
     });
 

@@ -68,12 +68,14 @@ export async function POST(req: Request) {
     const cleanUsername = username.trim().toLowerCase();
     const cleanEmail = `${cleanUsername}@sls.internal`;
 
-    // Check duplicate username
+    // Case-insensitive duplicate check
     const existing = await prisma.user.findFirst({
       where: {
         OR: [
           { username: cleanUsername },
+          { username: { equals: cleanUsername, mode: 'insensitive' } },
           { email: cleanEmail },
+          { email: { equals: cleanEmail, mode: 'insensitive' } },
         ],
       },
     });

@@ -475,7 +475,10 @@ export default function UserManagementPage() {
                       required
                       placeholder="e.g. shubham.s"
                       value={form.username}
-                      onChange={(e) => setForm({ ...form, username: e.target.value })}
+                      onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase().trim() })}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck="false"
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-medium focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-none"
                     />
                   </div>
