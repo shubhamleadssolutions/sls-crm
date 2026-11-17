@@ -30,6 +30,10 @@ import {
   CalendarCheck,
   Palmtree,
   Info,
+  Percent,
+  Award,
+  BarChart3,
+  Layers,
 } from 'lucide-react';
 
 interface DayRecord {
@@ -51,13 +55,23 @@ interface StaffMember {
   username: string;
   role: string;
   designation: string | null;
-  status: string;
-  punchIn: string | null;
-  punchOut: string | null;
-  workingHours: number | null;
-  plannedTasks: string | null;
-  workDone: string | null;
-  workLocation: string | null;
+  shiftTiming: string;
+  todayStatus: string;
+  punchInToday: string | null;
+  punchOutToday: string | null;
+  workingHoursToday: number | null;
+  plannedTasksToday: string | null;
+  workDoneToday: string | null;
+  presentDays: number;
+  lateDays: number;
+  halfDays: number;
+  leaves: number;
+  absents: number;
+  workingDays: number;
+  totalHours: number;
+  avgHours: number | string;
+  attendancePercentage: number;
+  recordsByDate: Record<string, DayRecord>;
 }
 
 const MONTH_NAMES = [
@@ -77,7 +91,11 @@ export default function AttendancePage() {
   // Active Tab: 'my' = My Attendance (all employees, CEO, MD); 'staff' = Staff Attendance Record (CEO & MD only)
   const [activeTab, setActiveTab] = useState<'my' | 'staff'>('my');
 
-  // Month navigation for Calendar View (defaults to current date)
+  // Timeframe selector: 'month' | 'year' | 'all' (recurring whole time)
+  const [timeframe, setTimeframe] = useState<'month' | 'year' | 'all'>('month');
+  const [periodLabel, setPeriodLabel] = useState('November 2026');
+
+  // Month & Year navigation (defaults to current date)
   const [viewDate, setViewDate] = useState(() => new Date());
   const [calendarData, setCalendarData] = useState<{
     year: number;
@@ -95,6 +113,8 @@ export default function AttendancePage() {
     totalLeave: 0,
     totalLate: 0,
     totalHalfDay: 0,
+    totalWorkingDays: 0,
+    attendancePercentage: 100.0,
     avgDailyHours: '8.0',
   });
 
@@ -116,6 +136,7 @@ export default function AttendancePage() {
   const [showPunchInModal, setShowPunchInModal] = useState(false);
   const [showPunchOutModal, setShowPunchOutModal] = useState(false);
   const [selectedDayDetails, setSelectedDayDetails] = useState<{ dateStr: string; record: DayRecord | null } | null>(null);
+  const [inspectStaff, setInspectStaff] = useState<StaffMember | null>(null);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [leaveSubmitting, setLeaveSubmitting] = useState(false);
   const [leaveForm, setLeaveForm] = useState({
@@ -144,15 +165,22 @@ export default function AttendancePage() {
     return () => clearInterval(timer);
   }, []);
 
-  const fetchAttendanceData = async (targetYear: number, targetMonth: number) => {
+  const fetchAttendanceData = async (
+    targetTf: 'month' | 'year' | 'all' = timeframe,
+    targetYear: number = viewDate.getFullYear(),
+    targetMonth: number = viewDate.getMonth() + 1
+  ) => {
     try {
       setLoading(true);
       const monthStr = `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
-      const res = await fetch(`/api/attendance?month=${monthStr}`);
+      const res = await fetch(`/api/attendance?timeframe=${targetTf}&month=${monthStr}&year=${targetYear}`);
       if (res.ok) {
         const data = await res.json();
         setTodayRecord(data.todayRecord || null);
         setIsExecutive(Boolean(data.isExecutive));
+        if (data.periodLabel) {
+          setPeriodLabel(data.periodLabel);
+        }
         if (data.calendar) {
           setCalendarData(data.calendar);
         }
@@ -177,8 +205,8 @@ export default function AttendancePage() {
   };
 
   useEffect(() => {
-    fetchAttendanceData(viewDate.getFullYear(), viewDate.getMonth() + 1);
-  }, [viewDate]);
+    fetchAttendanceData(timeframe, viewDate.getFullYear(), viewDate.getMonth() + 1);
+  }, [timeframe, viewDate]);
 
   const handlePrevMonth = () => {
     setViewDate((prev) => {
@@ -230,7 +258,7 @@ export default function AttendancePage() {
         setShowPunchInModal(false);
         setPlannedTasksInput('');
         setNotesInput('');
-        await fetchAttendanceData(viewDate.getFullYear(), viewDate.getMonth() + 1);
+        await fetchAttendanceData(timeframe, viewDate.getFullYear(), viewDate.getMonth() + 1);
       }
     } catch (err: any) {
       setFormError(err.message || 'Network error occurred');
@@ -268,7 +296,7 @@ export default function AttendancePage() {
         setShowPunchOutModal(false);
         setWorkDoneInput('');
         setNotesInput('');
-        await fetchAttendanceData(viewDate.getFullYear(), viewDate.getMonth() + 1);
+        await fetchAttendanceData(timeframe, viewDate.getFullYear(), viewDate.getMonth() + 1);
       }
     } catch (err: any) {
       setFormError(err.message || 'Network error occurred');
@@ -318,7 +346,7 @@ export default function AttendancePage() {
         leaveType: 'LEAVE',
         reason: '',
       });
-      await fetchAttendanceData(viewDate.getFullYear(), viewDate.getMonth() + 1);
+      await fetchAttendanceData(timeframe, viewDate.getFullYear(), viewDate.getMonth() + 1);
     } catch (err: any) {
       setFeedback({ type: 'error', message: err.message || 'Error recording leave.' });
     } finally {
@@ -507,6 +535,147 @@ export default function AttendancePage() {
             </button>
           </div>
         )}
+
+        {/* Global Timeframe Scope Toolbar (Month, Year, Whole Time / All-Time) */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 rounded-3xl border border-slate-200/90 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-blue-50 text-blue-600 rounded-2xl">
+              <BarChart3 className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                Attendance Scope &bull; Recurring Analytics
+              </span>
+              <p className="text-sm font-black text-slate-900 flex items-center gap-2">
+                <span>{periodLabel}</span>
+                {timeframe === 'all' && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                    Recurring All-Time
+                  </span>
+                )}
+                {timeframe === 'year' && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                    Annual Summary
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Scope Toggle: Month | Year | Whole Time */}
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200/70">
+              <button
+                type="button"
+                onClick={() => setTimeframe('month')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  timeframe === 'month'
+                    ? 'bg-white text-blue-600 shadow-xs font-black'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+                <span>Month</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeframe('year')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  timeframe === 'year'
+                    ? 'bg-white text-blue-600 shadow-xs font-black'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <CalendarIcon className="w-3.5 h-3.5" />
+                <span>Year</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeframe('all')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  timeframe === 'all'
+                    ? 'bg-white text-blue-600 shadow-xs font-black'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <History className="w-3.5 h-3.5" />
+                <span>Whole Time / All</span>
+              </button>
+            </div>
+
+            {/* Quick Navigation Controls for Month / Year */}
+            {timeframe === 'month' && (
+              <div className="flex items-center gap-1 bg-slate-50 border border-slate-200/90 p-1 rounded-2xl">
+                <button
+                  type="button"
+                  onClick={handlePrevMonth}
+                  className="p-1.5 rounded-xl hover:bg-slate-200/70 text-slate-600 transition cursor-pointer"
+                  title="Previous Month"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTodayMonth}
+                  className="px-2.5 py-1 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-200/70 transition cursor-pointer"
+                >
+                  This Month
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextMonth}
+                  className="p-1.5 rounded-xl hover:bg-slate-200/70 text-slate-600 transition cursor-pointer"
+                  title="Next Month"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {timeframe === 'year' && (
+              <div className="flex items-center gap-1 bg-slate-50 border border-slate-200/90 p-1 rounded-2xl">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewDate((prev) => {
+                      const copy = new Date(prev);
+                      copy.setFullYear(copy.getFullYear() - 1);
+                      return copy;
+                    });
+                  }}
+                  className="p-1.5 rounded-xl hover:bg-slate-200/70 text-slate-600 transition cursor-pointer"
+                  title="Previous Year"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="px-2.5 py-1 text-xs font-mono font-bold text-slate-800">
+                  {viewDate.getFullYear()}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewDate((prev) => {
+                      const copy = new Date(prev);
+                      copy.setFullYear(copy.getFullYear() + 1);
+                      return copy;
+                    });
+                  }}
+                  className="p-1.5 rounded-xl hover:bg-slate-200/70 text-slate-600 transition cursor-pointer"
+                  title="Next Year"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {timeframe === 'all' && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] font-semibold text-slate-600">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span>Since Nov 16, 2026</span>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* ========================================================================= */}
         {/* TAB 1: MY ATTENDANCE (EVERY EMPLOYEE INCLUDING CEO & MD)                  */}
@@ -726,9 +895,54 @@ export default function AttendancePage() {
             </div>
 
             {/* ========================================================================= */}
-            {/* SUMMARY STAT CARDS (Total Present, Total Absent, Total Leave)              */}
+            {/* SUMMARY STAT CARDS (Attendance %, Present, Absent, Leave, Avg Hours)      */}
             {/* ========================================================================= */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+              {/* Attendance Rate % */}
+              <div className="bg-white p-4 sm:p-5 rounded-3xl border border-blue-100 bg-gradient-to-br from-white to-blue-50/40 shadow-xs col-span-2 sm:col-span-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-blue-900">Attendance %</span>
+                  <div className="p-2 rounded-xl bg-blue-100 text-blue-700">
+                    <Percent className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-1.5 mt-2">
+                  <span className="text-2xl sm:text-3xl font-black text-blue-700 font-mono">
+                    {stats.attendancePercentage}%
+                  </span>
+                  <span
+                    className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                      stats.attendancePercentage >= 90
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : stats.attendancePercentage >= 75
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-rose-100 text-rose-800'
+                    }`}
+                  >
+                    {stats.attendancePercentage >= 90
+                      ? 'Excellent'
+                      : stats.attendancePercentage >= 75
+                      ? 'Good'
+                      : 'Attention'}
+                  </span>
+                </div>
+                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-2.5">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      stats.attendancePercentage >= 90
+                        ? 'bg-emerald-500'
+                        : stats.attendancePercentage >= 75
+                        ? 'bg-amber-500'
+                        : 'bg-rose-500'
+                    }`}
+                    style={{ width: `${Math.min(100, Math.max(0, stats.attendancePercentage))}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1.5 truncate">
+                  {stats.totalWorkingDays} eligible days &bull; {periodLabel}
+                </p>
+              </div>
+
               {/* Total Present */}
               <div className="bg-white p-4 sm:p-5 rounded-3xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/30 shadow-xs">
                 <div className="flex items-center justify-between">
@@ -737,10 +951,10 @@ export default function AttendancePage() {
                     <UserCheck className="w-4 h-4" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-black text-emerald-700 mt-2">
+                <p className="text-2xl sm:text-3xl font-black text-emerald-700 mt-2 font-mono">
                   {stats.totalPresent} <span className="text-xs font-semibold text-emerald-600">days</span>
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-slate-400 mt-0.5 truncate">
                   {stats.totalLate} late &bull; {stats.totalHalfDay} half-day
                 </p>
               </div>
@@ -753,10 +967,10 @@ export default function AttendancePage() {
                     <UserX className="w-4 h-4" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-black text-rose-700 mt-2">
+                <p className="text-2xl sm:text-3xl font-black text-rose-700 mt-2 font-mono">
                   {stats.totalAbsent} <span className="text-xs font-semibold text-rose-600">days</span>
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Working days missed</p>
+                <p className="text-[11px] text-slate-400 mt-0.5 truncate">Working days missed</p>
               </div>
 
               {/* Total Leave */}
@@ -767,24 +981,24 @@ export default function AttendancePage() {
                     <Palmtree className="w-4 h-4" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-black text-purple-700 mt-2">
+                <p className="text-2xl sm:text-3xl font-black text-purple-700 mt-2 font-mono">
                   {stats.totalLeave} <span className="text-xs font-semibold text-purple-600">days</span>
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Official approved leaves</p>
+                <p className="text-[11px] text-slate-400 mt-0.5 truncate">Approved leaves</p>
               </div>
 
               {/* Average Daily Hours */}
-              <div className="bg-white p-4 sm:p-5 rounded-3xl border border-blue-100 bg-gradient-to-br from-white to-blue-50/30 shadow-xs">
+              <div className="bg-white p-4 sm:p-5 rounded-3xl border border-blue-100 bg-gradient-to-br from-white to-blue-50/30 shadow-xs col-span-2 sm:col-span-1">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-blue-800">Avg Shift Hours</span>
                   <div className="p-2 rounded-xl bg-blue-100 text-blue-700">
                     <Timer className="w-4 h-4" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-black text-blue-700 mt-2">
+                <p className="text-2xl sm:text-3xl font-black text-blue-700 mt-2 font-mono">
                   {stats.avgDailyHours} <span className="text-xs font-semibold text-blue-600">hrs/day</span>
                 </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Logged shift average</p>
+                <p className="text-[11px] text-slate-400 mt-0.5 truncate">Logged shift average</p>
               </div>
             </div>
 
@@ -959,8 +1173,11 @@ export default function AttendancePage() {
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-900 tracking-tight">
-                    Staff Attendance &amp; Workforce Record
+                  <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+                    <span>Staff Attendance &amp; Workforce Record</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                      {periodLabel}
+                    </span>
                   </h2>
                   <p className="text-xs text-slate-500">
                     Executive oversight for Managing Director (MD) and Chief Executive Officer (CEO)
@@ -969,7 +1186,7 @@ export default function AttendancePage() {
               </div>
               <div className="flex items-center gap-2.5 flex-wrap">
                 <span className="text-xs font-bold px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200">
-                  Staff: {staffList.length} Members
+                  Workforce: {staffList.length} Members
                 </span>
                 <button
                   type="button"
@@ -992,102 +1209,236 @@ export default function AttendancePage() {
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-xs text-slate-600 flex items-start gap-2.5">
-              <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-              <div>
-                <strong className="text-slate-900">Staff Attendance Record module initialized.</strong>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Currently showing live shift status and task submissions. Detailed staff analytics, leave management, and monthly payroll export will be configured according to your next instructions.
+            {/* Workforce Summary KPI Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              {/* Avg Workforce Attendance */}
+              <div className="bg-white p-4 sm:p-5 rounded-3xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/40 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-indigo-900">Team Attendance %</span>
+                  <div className="p-2 rounded-xl bg-indigo-100 text-indigo-700">
+                    <Percent className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-1.5 mt-2">
+                  <span className="text-2xl sm:text-3xl font-black text-indigo-700 font-mono">
+                    {staffList.length > 0
+                      ? (
+                          staffList.reduce((acc, m) => acc + (m.attendancePercentage || 0), 0) /
+                          staffList.length
+                        ).toFixed(1)
+                      : '100.0'}
+                    %
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-500">workforce avg</span>
+                </div>
+                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-2.5">
+                  <div
+                    className="h-full rounded-full bg-indigo-600 transition-all duration-500"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.max(
+                          0,
+                          Number(
+                            staffList.length > 0
+                              ? (
+                                  staffList.reduce((acc, m) => acc + (m.attendancePercentage || 0), 0) /
+                                  staffList.length
+                                ).toFixed(1)
+                              : 100
+                          )
+                        )
+                      )}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1.5 truncate">
+                  Across all active employees &bull; {periodLabel}
                 </p>
+              </div>
+
+              {/* Total Staff Tracked */}
+              <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/50 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-700">Active Staff</span>
+                  <div className="p-2 rounded-xl bg-slate-100 text-slate-700">
+                    <Users className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-2 font-mono">
+                  {staffList.length} <span className="text-xs font-semibold text-slate-500">members</span>
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5 truncate">Total active workforce</p>
+              </div>
+
+              {/* Today on Duty */}
+              <div className="bg-white p-4 sm:p-5 rounded-3xl border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/30 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-emerald-800">On Duty Today</span>
+                  <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700">
+                    <UserCheck className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-black text-emerald-700 mt-2 font-mono">
+                  {
+                    staffList.filter(
+                      (m) => m.todayStatus === 'PRESENT' || m.todayStatus === 'LATE' || m.punchInToday
+                    ).length
+                  }{' '}
+                  <span className="text-xs font-semibold text-emerald-600">/ {staffList.length}</span>
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5 truncate">Punched in / In progress</p>
+              </div>
+
+              {/* Today Off / Leave / Absent */}
+              <div className="bg-white p-4 sm:p-5 rounded-3xl border border-amber-100 bg-gradient-to-br from-white to-amber-50/30 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-amber-800">Leaves / Absent Today</span>
+                  <div className="p-2 rounded-xl bg-amber-100 text-amber-700">
+                    <Palmtree className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-black text-amber-700 mt-2 font-mono">
+                  {staffList.filter((m) => m.todayStatus === 'LEAVE' || m.todayStatus === 'HALF_DAY').length}{' '}
+                  <span className="text-xs font-semibold text-amber-600">
+                    leave &bull; {staffList.filter((m) => m.todayStatus === 'ABSENT').length} absent
+                  </span>
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5 truncate">Out of office today</p>
               </div>
             </div>
 
             {/* Staff Attendance Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-700 min-w-[700px]">
+              <table className="w-full text-left text-xs text-slate-700 min-w-[850px]">
                 <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                   <tr>
                     <th className="px-5 py-3">Team Member</th>
-                    <th className="px-5 py-3">Role</th>
-                    <th className="px-5 py-3">Today's Status</th>
-                    <th className="px-5 py-3">Punch In</th>
-                    <th className="px-5 py-3">Punch Out</th>
-                    <th className="px-5 py-3">Hours Logged</th>
-                    <th className="px-5 py-3">Tasks for the Day</th>
-                    <th className="px-5 py-3 text-right">Details</th>
+                    <th className="px-4 py-3">Shift &amp; Timings</th>
+                    <th className="px-4 py-3 text-center">Attendance %</th>
+                    <th className="px-3 py-3 text-center">Present</th>
+                    <th className="px-3 py-3 text-center">Half Day</th>
+                    <th className="px-3 py-3 text-center">Leave</th>
+                    <th className="px-3 py-3 text-center">Absent</th>
+                    <th className="px-4 py-3 text-center">Hours Logged</th>
+                    <th className="px-4 py-3 text-center">Today's Status</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {staffList.map((member) => (
                     <tr key={member.userId} className="hover:bg-slate-50/70 transition">
+                      {/* Member Name */}
                       <td className="px-5 py-3.5">
-                        <div className="font-bold text-slate-900">{member.name}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">@{member.username}</div>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center font-bold text-xs text-indigo-700 shrink-0">
+                            {member.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-900">{member.name}</div>
+                            <div className="text-[10px] text-slate-400 font-mono">@{member.username}</div>
+                          </div>
+                        </div>
                       </td>
-                      <td className="px-5 py-3.5">
+
+                      {/* Shift & Role */}
+                      <td className="px-4 py-3.5">
                         <span className="font-semibold text-slate-800">{member.designation || member.role}</span>
-                        <div className="text-[10px] text-slate-400">{member.role}</div>
+                        <div className="text-[10px] text-slate-400 font-mono">{member.shiftTiming}</div>
                       </td>
-                      <td className="px-5 py-3.5">
+
+                      {/* Attendance % */}
+                      <td className="px-4 py-3.5 text-center">
+                        <div className="inline-flex flex-col items-center">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-black text-xs font-mono border ${
+                              member.attendancePercentage >= 90
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                : member.attendancePercentage >= 75
+                                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                : 'bg-rose-100 text-rose-800 border-rose-300'
+                            }`}
+                          >
+                            {member.attendancePercentage}%
+                          </span>
+                          <div className="w-14 bg-slate-100 h-1 rounded-full overflow-hidden mt-1">
+                            <div
+                              className={`h-full rounded-full ${
+                                member.attendancePercentage >= 90
+                                  ? 'bg-emerald-500'
+                                  : member.attendancePercentage >= 75
+                                  ? 'bg-amber-500'
+                                  : 'bg-rose-500'
+                              }`}
+                              style={{ width: `${Math.min(100, Math.max(0, member.attendancePercentage))}%` }}
+                            />
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Present Days */}
+                      <td className="px-3 py-3.5 text-center font-mono font-bold text-emerald-700">
+                        {member.presentDays}
+                        {member.lateDays > 0 && (
+                          <span className="block text-[9px] font-normal text-amber-600">
+                            ({member.lateDays} late)
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Half Days */}
+                      <td className="px-3 py-3.5 text-center font-mono font-bold text-sky-700">
+                        {member.halfDays}
+                      </td>
+
+                      {/* Leaves */}
+                      <td className="px-3 py-3.5 text-center font-mono font-bold text-purple-700">
+                        {member.leaves}
+                      </td>
+
+                      {/* Absents */}
+                      <td className="px-3 py-3.5 text-center font-mono font-bold text-rose-700">
+                        {member.absents}
+                      </td>
+
+                      {/* Hours Logged */}
+                      <td className="px-4 py-3.5 text-center font-mono font-bold text-slate-800">
+                        {member.totalHours} hrs
+                      </td>
+
+                      {/* Today's Status */}
+                      <td className="px-4 py-3.5 text-center">
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[10px] ${
-                            member.status === 'PRESENT'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : member.status === 'LATE'
-                              ? 'bg-amber-100 text-amber-800'
-                              : member.status === 'HALF_DAY'
-                              ? 'bg-sky-100 text-sky-800'
-                              : member.status === 'LEAVE'
+                            member.todayStatus === 'PRESENT'
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              : member.todayStatus === 'LATE'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                              : member.todayStatus === 'HALF_DAY'
+                              ? 'bg-sky-100 text-sky-800 border border-sky-200'
+                              : member.todayStatus === 'LEAVE'
                               ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                              : member.status === 'ABSENT'
+                              : member.todayStatus === 'ABSENT'
                               ? 'bg-rose-100 text-rose-800 border border-rose-200'
                               : 'bg-slate-100 text-slate-500'
                           }`}
                         >
-                          {member.status === 'NOT_MARKED'
-                            ? 'Shift Active / In Progress'
-                            : member.status === 'LEAVE'
+                          {member.todayStatus === 'NOT_MARKED'
+                            ? member.punchInToday
+                              ? 'Shift In Progress'
+                              : 'Awaiting Punch In'
+                            : member.todayStatus === 'LEAVE'
                             ? 'Approved Leave'
-                            : member.status === 'HALF_DAY'
+                            : member.todayStatus === 'HALF_DAY'
                             ? 'Half Day'
-                            : member.status === 'ABSENT'
+                            : member.todayStatus === 'ABSENT'
                             ? 'Absent (Auto)'
-                            : member.status}
+                            : member.todayStatus}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 font-mono">
-                        {member.punchIn && member.status !== 'LEAVE'
-                          ? new Date(member.punchIn).toLocaleTimeString('en-IN', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: true,
-                            })
-                          : '—'}
-                      </td>
-                      <td className="px-5 py-3.5 font-mono">
-                        {member.punchOut && member.status !== 'LEAVE'
-                          ? new Date(member.punchOut).toLocaleTimeString('en-IN', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: true,
-                            })
-                          : member.punchIn && member.status !== 'LEAVE'
-                          ? 'In Shift'
-                          : '—'}
-                      </td>
-                      <td className="px-5 py-3.5 font-bold text-slate-900">
-                        {member.status === 'LEAVE'
-                          ? '0 hrs (Leave)'
-                          : member.workingHours
-                          ? `${member.workingHours} hrs`
-                          : member.punchIn
-                          ? 'Active'
-                          : '—'}
-                      </td>
-                      <td className="px-5 py-3.5 text-slate-600 max-w-[180px] truncate">
-                        {member.plannedTasks || '—'}
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
+
+                      {/* Actions */}
+                      <td className="px-4 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
@@ -1103,25 +1454,20 @@ export default function AttendancePage() {
                               setShowLeaveModal(true);
                             }}
                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100 text-[10px] font-bold transition cursor-pointer border border-purple-200/70"
-                            title="Mark Leave / Absence for this employee"
+                            title="Mark Leave / Half-Day for this employee"
                           >
                             <CalendarCheck className="w-3 h-3" />
                             <span>Mark Leave</span>
                           </button>
-                          {(member.plannedTasks || member.workDone) && (
-                            <button
-                              onClick={() =>
-                                setSelectedDayDetails({
-                                  dateStr: 'Today',
-                                  record: member as any,
-                                })
-                              }
-                              className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition cursor-pointer"
-                              title="Inspect Task & Work Report"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => setInspectStaff(member)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 text-[10px] font-bold transition cursor-pointer border border-blue-200/70"
+                            title="Inspect Full Attendance Breakdown"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>Full Log</span>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1686,6 +2032,205 @@ export default function AttendancePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 5: INSPECT STAFF ATTENDANCE FULL LOG & BREAKDOWN (CEO & MD ONLY)    */}
+      {/* ========================================================================= */}
+      {inspectStaff && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0" onClick={() => setInspectStaff(null)} aria-hidden="true" />
+          <div className="relative z-10 w-full max-w-3xl bg-white rounded-3xl border border-slate-200/90 shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-5 pb-4 border-b border-slate-100 shrink-0 bg-gradient-to-r from-slate-50 to-indigo-50/30">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-indigo-500/20">
+                  {inspectStaff.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-slate-900">
+                      {inspectStaff.name}
+                    </h3>
+                    <span className="text-[10px] font-mono text-slate-400">
+                      @{inspectStaff.username}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                      {inspectStaff.designation || inspectStaff.role}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">
+                    <span>Shift: {inspectStaff.shiftTiming}</span>
+                    <span>&bull;</span>
+                    <span className="font-semibold text-slate-700">Period: {periodLabel}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInspectStaff(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-5">
+              {/* Top Stats Strip for this Staff Member */}
+              <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
+                <div className="bg-indigo-50/80 p-3 rounded-2xl border border-indigo-100 col-span-2 sm:col-span-1">
+                  <span className="text-[10px] font-bold uppercase text-indigo-700">Attendance</span>
+                  <p className="text-xl font-black font-mono text-indigo-900 mt-0.5">
+                    {inspectStaff.attendancePercentage}%
+                  </p>
+                </div>
+                <div className="bg-emerald-50/80 p-3 rounded-2xl border border-emerald-100">
+                  <span className="text-[10px] font-bold uppercase text-emerald-700">Present</span>
+                  <p className="text-xl font-black font-mono text-emerald-900 mt-0.5">
+                    {inspectStaff.presentDays}
+                  </p>
+                </div>
+                <div className="bg-amber-50/80 p-3 rounded-2xl border border-amber-100">
+                  <span className="text-[10px] font-bold uppercase text-amber-700">Late</span>
+                  <p className="text-xl font-black font-mono text-amber-900 mt-0.5">
+                    {inspectStaff.lateDays}
+                  </p>
+                </div>
+                <div className="bg-sky-50/80 p-3 rounded-2xl border border-sky-100">
+                  <span className="text-[10px] font-bold uppercase text-sky-700">Half-Day</span>
+                  <p className="text-xl font-black font-mono text-sky-900 mt-0.5">
+                    {inspectStaff.halfDays}
+                  </p>
+                </div>
+                <div className="bg-purple-50/80 p-3 rounded-2xl border border-purple-100">
+                  <span className="text-[10px] font-bold uppercase text-purple-700">Leave</span>
+                  <p className="text-xl font-black font-mono text-purple-900 mt-0.5">
+                    {inspectStaff.leaves}
+                  </p>
+                </div>
+                <div className="bg-rose-50/80 p-3 rounded-2xl border border-rose-100">
+                  <span className="text-[10px] font-bold uppercase text-rose-700">Absent</span>
+                  <p className="text-xl font-black font-mono text-rose-900 mt-0.5">
+                    {inspectStaff.absents}
+                  </p>
+                </div>
+              </div>
+
+              {/* Day-by-Day Attendance Log List */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                    <CalendarDays className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Daily Shift &amp; Task Submissions ({periodLabel})</span>
+                  </h4>
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    Total Hours: {inspectStaff.totalHours} hrs logged
+                  </span>
+                </div>
+
+                <div className="border border-slate-200/90 rounded-2xl overflow-hidden divide-y divide-slate-100 bg-white">
+                  {Object.entries(inspectStaff.recordsByDate || {})
+                    .sort(([a], [b]) => b.localeCompare(a))
+                    .map(([dateKey, rec]) => {
+                      const statusConfig = getStatusColorConfig(rec.status);
+                      return (
+                        <div key={dateKey} className="p-3.5 hover:bg-slate-50 transition space-y-2 text-xs">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-slate-900">
+                                {new Date(dateKey + 'T00:00:00Z').toLocaleDateString('en-IN', {
+                                  weekday: 'short',
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${statusConfig.badge}`}>
+                                {statusConfig.label}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-3 text-[11px] font-mono text-slate-600">
+                              {rec.punchIn && (
+                                <span>
+                                  In:{' '}
+                                  <strong className="text-slate-900">
+                                    {new Date(rec.punchIn).toLocaleTimeString('en-IN', {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      hour12: true,
+                                    })}
+                                  </strong>
+                                </span>
+                              )}
+                              {rec.punchOut && (
+                                <span>
+                                  Out:{' '}
+                                  <strong className="text-slate-900">
+                                    {new Date(rec.punchOut).toLocaleTimeString('en-IN', {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      hour12: true,
+                                    })}
+                                  </strong>
+                                </span>
+                              )}
+                              {rec.workingHours ? (
+                                <span className="text-blue-700 font-bold">
+                                  {rec.workingHours} hrs
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          {/* Planned Tasks / Goals */}
+                          {rec.plannedTasks && (
+                            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-700">
+                              <span className="font-bold text-[10px] uppercase text-slate-400 block mb-0.5">
+                                Tasks Planned:
+                              </span>
+                              <p className="whitespace-pre-wrap leading-relaxed">{rec.plannedTasks}</p>
+                            </div>
+                          )}
+
+                          {/* Work Done Report */}
+                          {rec.workDone && (
+                            <div className="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-100 text-emerald-950">
+                              <span className="font-bold text-[10px] uppercase text-emerald-700 block mb-0.5">
+                                Work Accomplished / Report:
+                              </span>
+                              <p className="whitespace-pre-wrap leading-relaxed">{rec.workDone}</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                  {(!inspectStaff.recordsByDate || Object.keys(inspectStaff.recordsByDate).length === 0) && (
+                    <div className="p-8 text-center text-slate-400 text-xs">
+                      No attendance activity recorded for this period yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 pt-3 border-t border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
+              <span className="text-[11px] text-slate-500 font-medium">
+                Official SLS Attendance &bull; Log Verified
+              </span>
+              <button
+                type="button"
+                onClick={() => setInspectStaff(null)}
+                className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-xs font-bold text-slate-700 transition cursor-pointer"
+              >
+                Close Log
+              </button>
+            </div>
           </div>
         </div>
       )}

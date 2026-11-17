@@ -79,14 +79,25 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const now = new Date();
     const { startUTC: todayStart, endUTC: todayEnd, istYear, istMonth, istDay } = getISTDayBounds(now);
+    const nowIST = getISTDate(now);
+    const istCurrentHour = nowIST.getHours();
+    const istCurrentMinute = nowIST.getMinutes();
 
     const shiftConfig = getShiftConfigForRole(sessionUser.role);
 
-    // Optional month query: e.g. "2026-11"
-    const monthQuery = searchParams.get('month'); // YYYY-MM
+    // Official launch date for SLS attendance tracking: Monday, Nov 16, 2026
+    const officialTrackingStartDate = new Date(2026, 10, 16); // 16 Nov 2026 IST
+
+    // Timeframe selector: 'month' | 'year' | 'all' (default: 'month')
+    const timeframeParam = searchParams.get('timeframe');
+    const timeframe: 'month' | 'year' | 'all' =
+      timeframeParam === 'year' || timeframeParam === 'all' ? timeframeParam : 'month';
+
+    // Parse requested Year and Month
     let filterYear = istYear;
     let filterMonth = istMonth; // 1-12
 
+    const monthQuery = searchParams.get('month'); // YYYY-MM
     if (monthQuery && monthQuery.includes('-')) {
       const parts = monthQuery.split('-');
       const py = parseInt(parts[0], 10);
@@ -97,9 +108,38 @@ export async function GET(req: Request) {
       }
     }
 
-    const monthStartUTC = new Date(Date.UTC(filterYear, filterMonth - 1, 1, 0, 0, 0, 0) - 3600000 * 5.5);
-    const lastDayOfMonth = new Date(filterYear, filterMonth, 0).getDate();
-    const monthEndUTC = new Date(Date.UTC(filterYear, filterMonth - 1, lastDayOfMonth, 23, 59, 59, 999) - 3600000 * 5.5);
+    const yearQuery = searchParams.get('year');
+    if (yearQuery) {
+      const y = parseInt(yearQuery, 10);
+      if (!isNaN(y) && y >= 2020 && y <= 2040) {
+        filterYear = y;
+      }
+    }
+
+    // Determine Period Start & End Bounds in UTC
+    let periodStartUTC: Date;
+    let periodEndUTC: Date;
+    let periodLabel = '';
+    const MONTH_NAMES = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    if (timeframe === 'month') {
+      periodStartUTC = new Date(Date.UTC(filterYear, filterMonth - 1, 1, 0, 0, 0, 0) - 3600000 * 5.5);
+      const lastDayOfMonth = new Date(filterYear, filterMonth, 0).getDate();
+      periodEndUTC = new Date(Date.UTC(filterYear, filterMonth - 1, lastDayOfMonth, 23, 59, 59, 999) - 3600000 * 5.5);
+      periodLabel = `${MONTH_NAMES[filterMonth - 1]} ${filterYear}`;
+    } else if (timeframe === 'year') {
+      periodStartUTC = new Date(Date.UTC(filterYear, 0, 1, 0, 0, 0, 0) - 3600000 * 5.5);
+      periodEndUTC = new Date(Date.UTC(filterYear, 11, 31, 23, 59, 59, 999) - 3600000 * 5.5);
+      periodLabel = `Year ${filterYear}`;
+    } else {
+      // 'all' - all time since launch
+      periodStartUTC = new Date(Date.UTC(2026, 10, 16, 0, 0, 0, 0) - 3600000 * 5.5);
+      periodEndUTC = new Date(Date.UTC(istYear, istMonth - 1, istDay, 23, 59, 59, 999) - 3600000 * 5.5);
+      periodLabel = `All Time (Since Nov 16, 2026)`;
+    }
 
     // 1. Fetch Today's Shift for Current User (active open shift first)
     let todayRecord = await prisma.attendance.findFirst({
@@ -133,21 +173,21 @@ export async function GET(req: Request) {
       });
     }
 
-    // 2. Fetch User's Attendance for the Selected Month
-    const monthRecords = await prisma.attendance.findMany({
+    // 2. Fetch User's Attendance Records for the Selected Period
+    const userPeriodRecords = await prisma.attendance.findMany({
       where: {
         userId: sessionUser.id,
         OR: [
           {
             punchIn: {
-              gte: monthStartUTC,
-              lte: monthEndUTC,
+              gte: periodStartUTC,
+              lte: periodEndUTC,
             },
           },
           {
             date: {
-              gte: monthStartUTC,
-              lte: monthEndUTC,
+              gte: periodStartUTC,
+              lte: periodEndUTC,
             },
           },
         ],
@@ -155,109 +195,125 @@ export async function GET(req: Request) {
       orderBy: { punchIn: 'asc' },
     });
 
-    // 3. Compute Calendar-Wise Attendance Map
-    const attendanceByDate: Record<string, any> = {};
-    let totalPresent = 0;
-    let totalLate = 0;
-    let totalHalfDay = 0;
-    let totalLeave = 0;
-    let totalHoursLogged = 0;
+    // Helper: Compute User Stats & Calendar for any user and record set
+    const computeStatsForUser = (records: any[], userRole: string) => {
+      const userShift = getShiftConfigForRole(userRole);
+      const attendanceByDate: Record<string, any> = {};
+      let totalPresent = 0;
+      let totalLate = 0;
+      let totalHalfDay = 0;
+      let totalLeave = 0;
+      let totalHoursLogged = 0;
 
-    monthRecords.forEach((rec) => {
-      const recDate = rec.punchIn || rec.date;
-      const recIST = getISTDate(new Date(recDate));
-      const dateKey = `${recIST.getFullYear()}-${String(recIST.getMonth() + 1).padStart(2, '0')}-${String(recIST.getDate()).padStart(2, '0')}`;
-      
-      attendanceByDate[dateKey] = {
-        id: rec.id,
-        date: rec.date,
-        punchIn: rec.punchIn,
-        punchOut: rec.punchOut,
-        status: rec.status,
-        plannedTasks: rec.plannedTasks,
-        workDone: rec.workDone,
-        workLocation: rec.workLocation,
-        workingHours: rec.workingHours ? Number(rec.workingHours) : null,
-      };
+      records.forEach((rec) => {
+        const recDate = rec.punchIn || rec.date;
+        const recIST = getISTDate(new Date(recDate));
+        const dateKey = `${recIST.getFullYear()}-${String(recIST.getMonth() + 1).padStart(2, '0')}-${String(recIST.getDate()).padStart(2, '0')}`;
 
-      if (rec.status === 'PRESENT') totalPresent++;
-      else if (rec.status === 'LATE') totalLate++;
-      else if (rec.status === 'HALF_DAY') totalHalfDay++;
-      else if (rec.status === 'LEAVE') totalLeave++;
+        attendanceByDate[dateKey] = {
+          id: rec.id,
+          date: rec.date,
+          punchIn: rec.punchIn,
+          punchOut: rec.punchOut,
+          status: rec.status,
+          plannedTasks: rec.plannedTasks,
+          workDone: rec.workDone,
+          workLocation: rec.workLocation,
+          workingHours: rec.workingHours ? Number(rec.workingHours) : null,
+        };
 
-      if (rec.workingHours) {
-        totalHoursLogged += Number(rec.workingHours);
-      }
-    });
+        if (rec.status === 'PRESENT') totalPresent++;
+        else if (rec.status === 'LATE') totalLate++;
+        else if (rec.status === 'HALF_DAY') totalHalfDay++;
+        else if (rec.status === 'LEAVE') totalLeave++;
 
-    // 4. Calculate Absents:
-    // SLS team work officially begins on Monday, Nov 16, 2026.
-    // Days prior to Monday, Nov 16, 2026 are not counted as absent.
-    const officialTrackingStartDate = new Date(2026, 10, 16); // Monday, 16 Nov 2026
-    let totalAbsent = 0;
+        if (rec.workingHours) {
+          totalHoursLogged += Number(rec.workingHours);
+        }
+      });
 
-    const isPastMonth = filterYear < istYear || (filterYear === istYear && filterMonth < istMonth);
-    const isCurrentMonth = filterYear === istYear && filterMonth === istMonth;
-    const isFutureMonth = filterYear > istYear || (filterYear === istYear && filterMonth > istMonth);
+      // Calculate working days & absents across the period
+      let totalAbsent = 0;
+      const todayDateKey = `${istYear}-${String(istMonth).padStart(2, '0')}-${String(istDay).padStart(2, '0')}`;
 
-    // CRITICAL FIX: Future months must NEVER show absent days!
-    let maxDayToCheck = 0;
-    if (isPastMonth) {
-      maxDayToCheck = lastDayOfMonth;
-    } else if (isCurrentMonth) {
-      maxDayToCheck = istDay;
-    } else {
-      // Future month: 0 days to check -> totalAbsent is strictly 0
-      maxDayToCheck = 0;
-    }
+      // Check if user's shift has ended today in IST
+      const shiftEndedToday =
+        istCurrentHour > userShift.endHour ||
+        (istCurrentHour === userShift.endHour && istCurrentMinute >= userShift.endMinute);
 
-    const nowIST = getISTDate(now);
-    const istCurrentHour = nowIST.getHours();
-    const istCurrentMinute = nowIST.getMinutes();
+      // Iterate through every single day in the period range that has elapsed
+      // Range: from max(periodStart, officialTrackingStartDate) to min(periodEnd, today)
+      const istStart = getISTDate(periodStartUTC);
+      const istEnd = getISTDate(periodEndUTC);
 
-    // Check if current user's shift has ended today
-    const shiftEndedToday =
-      istCurrentHour > shiftConfig.endHour ||
-      (istCurrentHour === shiftConfig.endHour && istCurrentMinute >= shiftConfig.endMinute);
+      const loopStart = new Date(
+        Math.max(
+          new Date(istStart.getFullYear(), istStart.getMonth(), istStart.getDate()).getTime(),
+          officialTrackingStartDate.getTime()
+        )
+      );
 
-    for (let day = 1; day <= maxDayToCheck; day++) {
-      const checkDateIST = new Date(filterYear, filterMonth - 1, day);
-      const dayOfWeek = checkDateIST.getDay(); // 0 is Sunday
-      const dateKey = `${filterYear}-${String(filterMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const todayISTMidnight = new Date(istYear, istMonth - 1, istDay);
+      const periodEndISTMidnight = new Date(istEnd.getFullYear(), istEnd.getMonth(), istEnd.getDate());
+      const loopEnd = new Date(Math.min(periodEndISTMidnight.getTime(), todayISTMidnight.getTime()));
 
-      // Skip Sunday (SLS official weekly off)
-      if (dayOfWeek === 0) continue;
+      if (loopStart <= loopEnd) {
+        for (let d = new Date(loopStart); d <= loopEnd; d.setDate(d.getDate() + 1)) {
+          const dayOfWeek = d.getDay(); // 0 is Sunday
+          if (dayOfWeek === 0) continue; // Skip Sundays (Weekly Off)
 
-      // Skip dates before official start from Monday (Nov 16, 2026)
-      if (checkDateIST < officialTrackingStartDate) {
-        continue;
-      }
+          const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-      // If today is ongoing in the current month:
-      // "absent automatically mark ho jana chahiye after end of the day."
-      // If shift has NOT ended yet, do not mark absent
-      if (isCurrentMonth && day === istDay) {
-        if (!shiftEndedToday || attendanceByDate[dateKey]) {
-          continue;
+          // If day is today:
+          if (dateKey === todayDateKey) {
+            // If shift has not ended yet or record already exists, do not mark absent
+            if (!shiftEndedToday || attendanceByDate[dateKey]) {
+              continue;
+            }
+          }
+
+          // If no record exists for this eligible working day, count as absent
+          if (!attendanceByDate[dateKey]) {
+            totalAbsent++;
+            attendanceByDate[dateKey] = {
+              date: new Date(d),
+              status: 'ABSENT',
+              isAutoGenerated: true,
+            };
+          }
         }
       }
 
-      // If no attendance record exists (not punched in, and no approved leave or half-day):
-      if (!attendanceByDate[dateKey]) {
-        totalAbsent++;
-        attendanceByDate[dateKey] = {
-          date: checkDateIST,
-          status: 'ABSENT',
-          isAutoGenerated: true,
-        };
-      }
-    }
+      const actualPresentCount = totalPresent + totalLate;
+      const totalWorkingDays = actualPresentCount + totalHalfDay + totalLeave + totalAbsent;
 
-    const actualPresentCount = totalPresent + totalLate + totalHalfDay;
-    const completedDays = monthRecords.filter((r) => r.workingHours).length;
-    const avgDailyHours = completedDays > 0 ? (totalHoursLogged / completedDays).toFixed(1) : `${shiftConfig.targetHours}.0`;
+      // Attendance % Formula: (Present + 0.5 * HalfDay) / Total Working Days * 100
+      const attendancePercentage =
+        totalWorkingDays > 0
+          ? Number((((actualPresentCount + totalHalfDay * 0.5) / totalWorkingDays) * 100).toFixed(1))
+          : 100.0;
 
-    // 5. Staff Attendance Record (Restricted to CEO & MD / ADMIN)
+      const completedDays = records.filter((r) => r.workingHours).length;
+      const avgDailyHours =
+        completedDays > 0 ? (totalHoursLogged / completedDays).toFixed(1) : `${userShift.targetHours}.0`;
+
+      return {
+        attendanceByDate,
+        totalPresent: actualPresentCount,
+        totalLate,
+        totalHalfDay,
+        totalLeave,
+        totalAbsent,
+        totalWorkingDays,
+        attendancePercentage,
+        totalHoursLogged: Number(totalHoursLogged.toFixed(1)),
+        avgDailyHours,
+      };
+    };
+
+    const myStats = computeStatsForUser(userPeriodRecords, sessionUser.role);
+
+    // 3. Staff Attendance Record (Restricted to CEO & MD / ADMIN)
     let staffAttendance: any[] = [];
     const isExecutive = sessionUser.role === 'ADMIN' || sessionUser.role === 'CEO';
 
@@ -271,8 +327,40 @@ export async function GET(req: Request) {
           role: true,
           designation: true,
         },
+        orderBy: { name: 'asc' },
       });
 
+      // Fetch all attendance records across all users for the entire selected period
+      const allPeriodAttendances = await prisma.attendance.findMany({
+        where: {
+          OR: [
+            {
+              punchIn: {
+                gte: periodStartUTC,
+                lte: periodEndUTC,
+              },
+            },
+            {
+              date: {
+                gte: periodStartUTC,
+                lte: periodEndUTC,
+              },
+            },
+          ],
+        },
+        orderBy: { punchIn: 'asc' },
+      });
+
+      // Group period records by userId
+      const userRecordsMap = new Map<string, any[]>();
+      allPeriodAttendances.forEach((att) => {
+        if (!userRecordsMap.has(att.userId)) {
+          userRecordsMap.set(att.userId, []);
+        }
+        userRecordsMap.get(att.userId)!.push(att);
+      });
+
+      // Fetch Today's Attendance for all users to determine today's live status
       const todayAllAttendances = await prisma.attendance.findMany({
         where: {
           OR: [
@@ -294,30 +382,31 @@ export async function GET(req: Request) {
         orderBy: { punchIn: 'desc' },
       });
 
-      const staffMap = new Map();
+      const todayStaffMap = new Map<string, any>();
       todayAllAttendances.forEach((att) => {
-        if (!staffMap.has(att.userId)) {
-          staffMap.set(att.userId, att);
+        if (!todayStaffMap.has(att.userId)) {
+          todayStaffMap.set(att.userId, att);
         }
       });
 
       staffAttendance = allUsers.map((u) => {
-        const att = staffMap.get(u.id);
-        const userShift = getShiftConfigForRole(u.role);
+        const uShift = getShiftConfigForRole(u.role);
+        const uRecords = userRecordsMap.get(u.id) || [];
+        const uStats = computeStatsForUser(uRecords, u.role);
 
-        let finalStatus = att ? att.status : 'NOT_MARKED';
+        // Today's Live Status
+        const todayAtt = todayStaffMap.get(u.id);
+        let todayStatus = todayAtt ? todayAtt.status : 'NOT_MARKED';
 
-        // Automatic Absent marking after shift ends / end of the day:
-        if (!att) {
+        if (!todayAtt) {
           const userShiftEnded =
-            istCurrentHour > userShift.endHour ||
-            (istCurrentHour === userShift.endHour && istCurrentMinute >= userShift.endMinute);
-
+            istCurrentHour > uShift.endHour ||
+            (istCurrentHour === uShift.endHour && istCurrentMinute >= uShift.endMinute);
           const isSunday = nowIST.getDay() === 0;
           const isAfterStart = now >= officialTrackingStartDate;
 
           if (userShiftEnded && !isSunday && isAfterStart) {
-            finalStatus = 'ABSENT';
+            todayStatus = 'ABSENT';
           }
         }
 
@@ -327,14 +416,25 @@ export async function GET(req: Request) {
           username: u.username,
           role: u.role,
           designation: u.designation,
-          shiftTiming: `${userShift.shiftStart} – ${userShift.shiftEnd}`,
-          status: finalStatus,
-          punchIn: att?.punchIn || null,
-          punchOut: att?.punchOut || null,
-          workingHours: att?.workingHours ? Number(att.workingHours) : null,
-          plannedTasks: att?.plannedTasks || null,
-          workDone: att?.workDone || null,
-          workLocation: att?.workLocation || 'Office',
+          shiftTiming: `${uShift.shiftStart} – ${uShift.shiftEnd}`,
+          // Today's Live Info:
+          todayStatus,
+          punchInToday: todayAtt?.punchIn || null,
+          punchOutToday: todayAtt?.punchOut || null,
+          workingHoursToday: todayAtt?.workingHours ? Number(todayAtt.workingHours) : null,
+          plannedTasksToday: todayAtt?.plannedTasks || null,
+          workDoneToday: todayAtt?.workDone || null,
+          // Period Aggregate Stats:
+          presentDays: uStats.totalPresent,
+          lateDays: uStats.totalLate,
+          halfDays: uStats.totalHalfDay,
+          leaves: uStats.totalLeave,
+          absents: uStats.totalAbsent,
+          workingDays: uStats.totalWorkingDays,
+          totalHours: uStats.totalHoursLogged,
+          avgHours: uStats.avgDailyHours,
+          attendancePercentage: uStats.attendancePercentage,
+          recordsByDate: uStats.attendanceByDate,
         };
       });
     }
@@ -343,20 +443,24 @@ export async function GET(req: Request) {
       todayRecord,
       shiftConfig,
       officialStartDate: 'Monday, Nov 16, 2026',
+      timeframe,
+      periodLabel,
       calendar: {
         year: filterYear,
         month: filterMonth,
-        attendanceByDate,
+        attendanceByDate: myStats.attendanceByDate,
       },
       stats: {
-        totalPresent: actualPresentCount,
-        totalAbsent,
-        totalLeave,
-        totalLate,
-        totalHalfDay,
-        avgDailyHours,
+        totalPresent: myStats.totalPresent,
+        totalAbsent: myStats.totalAbsent,
+        totalLeave: myStats.totalLeave,
+        totalLate: myStats.totalLate,
+        totalHalfDay: myStats.totalHalfDay,
+        totalWorkingDays: myStats.totalWorkingDays,
+        attendancePercentage: myStats.attendancePercentage,
+        avgDailyHours: myStats.avgDailyHours,
       },
-      history: monthRecords,
+      history: userPeriodRecords,
       staffAttendance: isExecutive ? staffAttendance : null,
       isExecutive,
     });
