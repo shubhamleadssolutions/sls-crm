@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { comparePassword, createSessionToken } from '@/lib/auth';
+import { detectDeviceInfo } from '@/lib/deviceDetector';
 
 export async function POST(req: Request) {
   try {
     const { username, password } = await req.json();
+    const deviceInfo = detectDeviceInfo(req);
 
     const cleanUsername = (username || '').trim();
 
@@ -19,12 +21,76 @@ export async function POST(req: Request) {
       },
     });
 
-    if (!user || !user.isActive) {
+    if (!user) {
+      // Record failed attempt for security audit
+      try {
+        await prisma.loginRecord.create({
+          data: {
+            username: cleanUsername,
+            name: 'Unknown User',
+            role: 'GUEST',
+            platform: deviceInfo.platform,
+            device: deviceInfo.device,
+            os: deviceInfo.os,
+            browser: deviceInfo.browser,
+            ipAddress: deviceInfo.ipAddress,
+            userAgent: deviceInfo.userAgent,
+            status: 'FAILED',
+            failureReason: 'Username not found',
+          },
+        });
+      } catch (logErr) {
+        console.error('Failed to log failed login:', logErr);
+      }
       return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
+    }
+
+    if (!user.isActive) {
+      try {
+        await prisma.loginRecord.create({
+          data: {
+            userId: user.id,
+            username: user.username,
+            name: user.name,
+            role: user.role,
+            platform: deviceInfo.platform,
+            device: deviceInfo.device,
+            os: deviceInfo.os,
+            browser: deviceInfo.browser,
+            ipAddress: deviceInfo.ipAddress,
+            userAgent: deviceInfo.userAgent,
+            status: 'FAILED',
+            failureReason: 'Account deactivated by Administrator',
+          },
+        });
+      } catch (logErr) {
+        console.error('Failed to log deactivated user attempt:', logErr);
+      }
+      return NextResponse.json({ error: 'Account is deactivated. Contact Administrator.' }, { status: 401 });
     }
 
     const isValid = await comparePassword(password, user.passwordHash);
     if (!isValid) {
+      try {
+        await prisma.loginRecord.create({
+          data: {
+            userId: user.id,
+            username: user.username,
+            name: user.name,
+            role: user.role,
+            platform: deviceInfo.platform,
+            device: deviceInfo.device,
+            os: deviceInfo.os,
+            browser: deviceInfo.browser,
+            ipAddress: deviceInfo.ipAddress,
+            userAgent: deviceInfo.userAgent,
+            status: 'FAILED',
+            failureReason: 'Incorrect password entered',
+          },
+        });
+      } catch (logErr) {
+        console.error('Failed to log wrong password attempt:', logErr);
+      }
       return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
     }
 
@@ -35,6 +101,27 @@ export async function POST(req: Request) {
       name: user.name,
     });
 
+    // Record successful login record with platform, device, OS, browser, IP
+    try {
+      await prisma.loginRecord.create({
+        data: {
+          userId: user.id,
+          username: user.username,
+          name: user.name,
+          role: user.role,
+          platform: deviceInfo.platform,
+          device: deviceInfo.device,
+          os: deviceInfo.os,
+          browser: deviceInfo.browser,
+          ipAddress: deviceInfo.ipAddress,
+          userAgent: deviceInfo.userAgent,
+          status: 'SUCCESS',
+        },
+      });
+    } catch (recordErr) {
+      console.error('Failed to save login record:', recordErr);
+    }
+
     // Create audit log
     await prisma.auditLog.create({
       data: {
@@ -42,7 +129,7 @@ export async function POST(req: Request) {
         action: 'USER_LOGIN',
         entityType: 'User',
         entityId: user.id,
-        details: `${user.name} (${user.username}) logged in`,
+        details: `${user.name} (${user.username}) logged in from ${deviceInfo.platform} (${deviceInfo.device}, ${deviceInfo.browser})`,
       },
     });
 

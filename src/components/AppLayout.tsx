@@ -27,6 +27,7 @@ import {
   ChevronDown,
   User as UserIcon,
   Shield,
+  ShieldCheck,
   Phone,
   CheckCircle2,
   Trophy,
@@ -220,7 +221,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           ))}
 
-          {/* User Management in Sidebar (CEO, MD, IT Manager) */}
+          {/* User Management & Login Activity in Sidebar (CEO, MD, IT Manager) */}
           {canManageUsers && (
             <div className="pt-2 border-t border-slate-100 space-y-1">
               <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -240,6 +241,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
                 <span className="text-[9px] font-bold bg-blue-100 text-blue-800 px-1.5 py-0.2 rounded-full">
                   {user.role}
+                </span>
+              </Link>
+              <Link
+                href="/settings/logins"
+                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  pathname.startsWith('/settings/logins')
+                    ? 'bg-purple-50 text-purple-700 font-bold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <ShieldCheck className="w-4 h-4 text-purple-600" />
+                  <span>Login Activity</span>
+                </div>
+                <span className="text-[9px] font-bold bg-purple-100 text-purple-800 px-1.5 py-0.2 rounded-full">
+                  Live
                 </span>
               </Link>
             </div>
@@ -333,6 +350,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   ? 'Outreach Templates'
                   : pathname.startsWith('/settings/users')
                   ? 'User Management'
+                  : pathname.startsWith('/settings/logins')
+                  ? 'User Login Activity'
                   : 'CRM Portal'}
               </span>
             </div>
@@ -553,6 +572,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       {user.role}
                     </span>
                   </Link>
+                  <Link
+                    href="/settings/logins"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                      pathname.startsWith('/settings/logins')
+                        ? 'bg-purple-50 text-purple-700 font-bold shadow-xs'
+                        : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <ShieldCheck className="w-4 h-4 text-purple-600" />
+                      <span>Login Activity</span>
+                    </div>
+                    <span className="text-[9px] font-bold bg-purple-100 text-purple-800 px-1.5 py-0.2 rounded-full">
+                      Live
+                    </span>
+                  </Link>
                 </div>
               )}
             </nav>
@@ -638,10 +674,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-          <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-            <div className="fixed inset-0" onClick={() => setShowLogoutModal(false)} aria-hidden="true" />
-            <div className="relative z-10 w-full max-w-sm bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-8 animate-scale-in">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0" onClick={() => setShowLogoutModal(false)} aria-hidden="true" />
+          <div className="relative z-10 w-full max-w-sm bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100">
                   <LogOut className="w-5 h-5" />
@@ -674,8 +709,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }

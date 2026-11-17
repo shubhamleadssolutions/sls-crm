@@ -347,151 +347,152 @@ export default function ClientsPage() {
 
         {/* Add Client Modal */}
         {showModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div className="fixed inset-0" onClick={() => setShowModal(false)} aria-hidden="true" />
-              <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-8 animate-scale-in">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
-                      <Briefcase className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-bold text-slate-900">Add New Retainer Client</h3>
-                      <p className="text-[11px] text-slate-500">Onboard an educational institute or institution partner</p>
-                    </div>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setShowModal(false)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+              <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+                    <Briefcase className="w-5 h-5" />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-              <form onSubmit={handleCreateClient} className="space-y-3.5">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Company / College Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Apex Institute of Management"
-                    value={form.companyName}
-                    onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Contact Person</label>
+                    <h3 className="text-base font-bold text-slate-900">Add New Retainer Client</h3>
+                    <p className="text-[11px] text-slate-500">Onboard an educational institute or institution partner</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateClient} className="flex flex-col flex-1 overflow-hidden">
+                <div className="p-5 overflow-y-auto space-y-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Company / College Name *</label>
                     <input
                       type="text"
-                      placeholder="e.g. Dr. Rajesh Sharma"
-                      value={form.contactPerson}
-                      onChange={(e) => setForm({ ...form, contactPerson: e.target.value })}
+                      required
+                      placeholder="e.g. Apex Institute of Management"
+                      value={form.companyName}
+                      onChange={(e) => setForm({ ...form, companyName: e.target.value })}
                       className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Contact Person</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Dr. Rajesh Sharma"
+                        value={form.contactPerson}
+                        onChange={(e) => setForm({ ...form, contactPerson: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number</label>
+                      <input
+                        type="tel"
+                        placeholder="e.g. 9876543210"
+                        value={form.phone}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
                     <input
-                      type="tel"
-                      placeholder="e.g. 9876543210"
-                      value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      type="email"
+                      placeholder="e.g. admissions@apexinstitute.edu.in"
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
                       className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    placeholder="e.g. admissions@apexinstitute.edu.in"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Primary Service</label>
+                      <select
+                        value={form.service}
+                        onChange={(e) => setForm({ ...form, service: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="Student Lead Generation">Student Lead Generation</option>
+                        <option value="Meta Ads Management">Meta Ads Management</option>
+                        <option value="Google Search & Display">Google Search & Display</option>
+                        <option value="Full Funnel Marketing">Full Funnel Marketing</option>
+                      </select>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Primary Service</label>
-                    <select
-                      value={form.service}
-                      onChange={(e) => setForm({ ...form, service: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="Student Lead Generation">Student Lead Generation</option>
-                      <option value="Meta Ads Management">Meta Ads Management</option>
-                      <option value="Google Search & Display">Google Search & Display</option>
-                      <option value="Full Funnel Marketing">Full Funnel Marketing</option>
-                    </select>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Contract Type</label>
+                      <select
+                        value={form.contractType}
+                        onChange={(e) => setForm({ ...form, contractType: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="Monthly Retainer">Monthly Retainer</option>
+                        <option value="Performance-based">Performance-based</option>
+                        <option value="Hybrid (Retainer + CPL)">Hybrid (Retainer + CPL)</option>
+                        <option value="Quarterly Contract">Quarterly Contract</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Contract Type</label>
-                    <select
-                      value={form.contractType}
-                      onChange={(e) => setForm({ ...form, contractType: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="Monthly Retainer">Monthly Retainer</option>
-                      <option value="Performance-based">Performance-based</option>
-                      <option value="Hybrid (Retainer + CPL)">Hybrid (Retainer + CPL)</option>
-                      <option value="Quarterly Contract">Quarterly Contract</option>
-                    </select>
-                  </div>
-                </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Retainer (₹)</label>
+                      <input
+                        type="number"
+                        placeholder="e.g. 50000"
+                        value={form.retainerAmount}
+                        onChange={(e) => setForm({ ...form, retainerAmount: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Retainer (₹)</label>
-                    <input
-                      type="number"
-                      placeholder="e.g. 50000"
-                      value={form.retainerAmount}
-                      onChange={(e) => setForm({ ...form, retainerAmount: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Payment Status</label>
+                      <select
+                        value={form.paymentStatus}
+                        onChange={(e) => setForm({ ...form, paymentStatus: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Paid">Paid</option>
+                        <option value="Overdue">Overdue</option>
+                      </select>
+                    </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Payment Status</label>
-                    <select
-                      value={form.paymentStatus}
-                      onChange={(e) => setForm({ ...form, paymentStatus: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="Pending">Pending</option>
-                      <option value="Paid">Paid</option>
-                      <option value="Overdue">Overdue</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Campaign Status</label>
-                    <select
-                      value={form.campaignStatus}
-                      onChange={(e) => setForm({ ...form, campaignStatus: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="Active">Active</option>
-                      <option value="Paused">Paused</option>
-                      <option value="Onboarding">Onboarding</option>
-                    </select>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Campaign Status</label>
+                      <select
+                        value={form.campaignStatus}
+                        onChange={(e) => setForm({ ...form, campaignStatus: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Paused">Paused</option>
+                        <option value="Onboarding">Onboarding</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <div className="flex items-center justify-end gap-2.5 p-4 pt-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -503,7 +504,6 @@ export default function ClientsPage() {
                   </button>
                 </div>
               </form>
-            </div>
             </div>
           </div>
         )}

@@ -1137,11 +1137,10 @@ export default function AttendancePage() {
       {/* MODAL 1: PUNCH IN - ENTER TODAY'S PLANNED TASKS (AUTOMATIC TIME FETCHED)  */}
       {/* ========================================================================= */}
       {showPunchInModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-          <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-            <div className="fixed inset-0" onClick={() => setShowPunchInModal(false)} aria-hidden="true" />
-            <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 sm:p-7 space-y-5 text-left my-8 animate-scale-in">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0" onClick={() => setShowPunchInModal(false)} aria-hidden="true" />
+          <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+            <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
                     <Clock className="w-5 h-5" />
@@ -1167,7 +1166,8 @@ export default function AttendancePage() {
               </div>
             )}
 
-            <form onSubmit={handlePunchInSubmit} className="space-y-4">
+            <form onSubmit={handlePunchInSubmit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-5 overflow-y-auto space-y-4">
               {/* Server Time Indicator */}
               <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between">
                 <div>
@@ -1262,12 +1262,14 @@ export default function AttendancePage() {
                 ))}
               </div>
 
+              </div>
+
               {/* Modal Actions */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+              <div className="p-4 pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0 bg-slate-50/50">
                 <button
                   type="button"
                   onClick={() => setShowPunchInModal(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1282,7 +1284,6 @@ export default function AttendancePage() {
               </div>
             </form>
           </div>
-          </div>
         </div>
       )}
 
@@ -1290,52 +1291,52 @@ export default function AttendancePage() {
       {/* MODAL 2: PUNCH OUT - ENTER WORK DONE / SUMMARY (AUTOMATIC TIME FETCHED)   */}
       {/* ========================================================================= */}
       {showPunchOutModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-          <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-            <div className="fixed inset-0" onClick={() => setShowPunchOutModal(false)} aria-hidden="true" />
-            <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 sm:p-7 space-y-5 text-left my-8 animate-scale-in">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-rose-50 text-rose-600 rounded-2xl border border-rose-100">
-                    <Coffee className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-black text-slate-900">Shift Punch Out &amp; Work Report</h3>
-                    <p className="text-[11px] text-slate-500">Official time fetched automatically</p>
-                  </div>
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0" onClick={() => setShowPunchOutModal(false)} aria-hidden="true" />
+          <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+            <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-rose-50 text-rose-600 rounded-2xl border border-rose-100">
+                  <Coffee className="w-5 h-5" />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowPunchOutModal(false)}
-                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-            {formError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{formError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handlePunchOutSubmit} className="space-y-4">
-              {/* Server Time & Duration Banner */}
-              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] uppercase font-bold text-slate-400">Current Server Time</p>
-                  <p className="text-base font-black font-mono text-slate-900">
-                    {currentTime ? currentTime.toLocaleTimeString('en-IN', { hour12: true }) : '--:--:--'}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Calculated Shift Duration</span>
-                  <p className="text-sm font-black font-mono text-blue-600">
-                    {getActiveDuration() || 'Computing...'}
-                  </p>
+                  <h3 className="text-base font-black text-slate-900">Shift Punch Out &amp; Work Report</h3>
+                  <p className="text-[11px] text-slate-500">Official time fetched automatically</p>
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowPunchOutModal(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handlePunchOutSubmit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-5 overflow-y-auto space-y-4">
+                {formError && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{formError}</span>
+                  </div>
+                )}
+
+                {/* Server Time & Duration Banner */}
+                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-slate-400">Current Server Time</p>
+                    <p className="text-base font-black font-mono text-slate-900">
+                      {currentTime ? currentTime.toLocaleTimeString('en-IN', { hour12: true }) : '--:--:--'}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Calculated Shift Duration</span>
+                    <p className="text-sm font-black font-mono text-blue-600">
+                      {getActiveDuration() || 'Computing...'}
+                    </p>
+                  </div>
+                </div>
 
               {/* What were the morning planned tasks */}
               {todayRecord?.plannedTasks && (
@@ -1391,12 +1392,14 @@ export default function AttendancePage() {
                 ))}
               </div>
 
+              </div>
+
               {/* Modal Actions */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+              <div className="p-4 pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0 bg-slate-50/50">
                 <button
                   type="button"
                   onClick={() => setShowPunchOutModal(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1411,7 +1414,6 @@ export default function AttendancePage() {
               </div>
             </form>
           </div>
-          </div>
         </div>
       )}
 
@@ -1419,34 +1421,33 @@ export default function AttendancePage() {
       {/* MODAL 3: VIEW DAY DETAILS & WORK SUMMARY MODAL                            */}
       {/* ========================================================================= */}
       {selectedDayDetails && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-          <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-            <div className="fixed inset-0" onClick={() => setSelectedDayDetails(null)} aria-hidden="true" />
-            <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 sm:p-7 space-y-4 text-left my-8 animate-scale-in">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-                    <CalendarIcon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-black text-slate-900">
-                      Attendance Log: {selectedDayDetails.dateStr}
-                    </h3>
-                    <p className="text-[11px] text-slate-500">
-                      Status: <span className="font-bold text-slate-800">{selectedDayDetails.record?.status || 'No Shift'}</span>
-                    </p>
-                  </div>
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0" onClick={() => setSelectedDayDetails(null)} aria-hidden="true" />
+          <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+            <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                  <CalendarIcon className="w-5 h-5" />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedDayDetails(null)}
-                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">
+                    Attendance Log: {selectedDayDetails.dateStr}
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Status: <span className="font-bold text-slate-800">{selectedDayDetails.record?.status || 'No Shift'}</span>
+                  </p>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setSelectedDayDetails(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <div className="space-y-4 text-xs">
+            <div className="p-5 overflow-y-auto space-y-4 text-xs">
               {/* Timing Grid */}
               <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
                 <div>
@@ -1501,7 +1502,7 @@ export default function AttendancePage() {
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex justify-end">
+            <div className="p-4 pt-3 border-t border-slate-100 flex justify-end shrink-0 bg-slate-50/50">
               <button
                 type="button"
                 onClick={() => setSelectedDayDetails(null)}
@@ -1511,7 +1512,6 @@ export default function AttendancePage() {
               </button>
             </div>
           </div>
-          </div>
         </div>
       )}
 
@@ -1519,30 +1519,30 @@ export default function AttendancePage() {
       {/* MODAL 4: MARK LEAVE / ABSENCE (EXECUTIVE PANEL FOR MD & CEO)              */}
       {/* ========================================================================= */}
       {showLeaveModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-          <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-            <div className="fixed inset-0" onClick={() => setShowLeaveModal(false)} aria-hidden="true" />
-            <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 sm:p-7 space-y-5 text-left my-8 animate-scale-in">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-purple-50 text-purple-600 rounded-2xl border border-purple-100">
-                    <CalendarCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-black text-slate-900">Mark Staff Leave / Half-Day</h3>
-                    <p className="text-[11px] text-slate-500">Executive authorization panel for Managing Director (MD) &amp; CEO</p>
-                  </div>
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0" onClick={() => setShowLeaveModal(false)} aria-hidden="true" />
+          <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+            <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-purple-50 text-purple-600 rounded-2xl border border-purple-100">
+                  <CalendarCheck className="w-5 h-5" />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowLeaveModal(false)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">Mark Staff Leave / Half-Day</h3>
+                  <p className="text-[11px] text-slate-500">Executive authorization panel for Managing Director (MD) &amp; CEO</p>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowLeaveModal(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <form onSubmit={handleMarkLeave} className="space-y-4">
+            <form onSubmit={handleMarkLeave} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-5 overflow-y-auto space-y-4">
               {/* Employee Selector */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
@@ -1665,12 +1665,14 @@ export default function AttendancePage() {
                 />
               </div>
 
+              </div>
+
               {/* Modal Actions */}
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2.5 p-4 pt-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
                 <button
                   type="button"
                   onClick={() => setShowLeaveModal(false)}
-                  className="px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                  className="px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1684,7 +1686,6 @@ export default function AttendancePage() {
                 </button>
               </div>
             </form>
-          </div>
           </div>
         </div>
       )}

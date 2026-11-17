@@ -119,22 +119,21 @@ export default function TemplatesPage() {
 
         {/* Modal: Add Template */}
         {showAddModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div className="fixed inset-0" onClick={() => setShowAddModal(false)} aria-hidden="true" />
-              <form onSubmit={handleCreate} className="relative z-10 w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-4 text-left my-8 animate-scale-in">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <h3 className="text-base font-bold text-slate-900">Add Communication Template</h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddModal(false)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setShowAddModal(false)} aria-hidden="true" />
+            <form onSubmit={handleCreate} className="relative z-10 w-full max-w-md bg-white rounded-3xl shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+              <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
+                <h3 className="text-base font-bold text-slate-900">Add Communication Template</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-              <div className="space-y-3">
+              <div className="p-5 overflow-y-auto space-y-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Title</label>
                   <input
@@ -186,23 +185,22 @@ export default function TemplatesPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 p-4 pt-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700"
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs"
                 >
                   Save Template
                 </button>
               </div>
             </form>
-          </div>
           </div>
         )}
       </div>

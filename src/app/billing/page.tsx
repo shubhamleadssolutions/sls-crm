@@ -604,102 +604,103 @@ export default function BillingPage() {
 
         {/* Modal: Add Item to Inventory */}
         {showAddInventoryModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div className="fixed inset-0" onClick={() => setShowAddInventoryModal(false)} aria-hidden="true" />
-              <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-left my-8 animate-scale-in">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-                      <Package className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-extrabold text-slate-900">Add Service to Inventory</h3>
-                      <p className="text-[11px] text-slate-500">Standardize pricing and deliverables for rapid invoicing</p>
-                    </div>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setShowAddInventoryModal(false)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+              <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                    <Package className="w-5 h-5" />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddInventoryModal(false)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-              <form onSubmit={handleCreateInventoryItem} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Service / Package Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Higher Education Monthly Retainer"
-                    value={newInvItem.name}
-                    onChange={(e) => setNewInvItem({ ...newInvItem, name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Category</label>
-                    <select
-                      value={newInvItem.category}
-                      onChange={(e) => setNewInvItem({ ...newInvItem, category: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    >
-                      <option value="Retainer Partnership">Retainer Partnership</option>
-                      <option value="Lead Acquisition">Lead Acquisition</option>
-                      <option value="B2B Outbound">B2B Outbound</option>
-                      <option value="Campaign Setup">Campaign Setup</option>
-                      <option value="Consultation">Consultation</option>
-                    </select>
+                    <h3 className="text-base font-extrabold text-slate-900">Add Service to Inventory</h3>
+                    <p className="text-[11px] text-slate-500">Standardize pricing and deliverables for rapid invoicing</p>
                   </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddInventoryModal(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
+              <form onSubmit={handleCreateInventoryItem} className="flex flex-col flex-1 overflow-hidden">
+                <div className="p-5 overflow-y-auto space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Billing Unit</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Service / Package Name *
+                    </label>
                     <input
                       type="text"
-                      placeholder="e.g. Per Month, Per 1000 Leads"
-                      value={newInvItem.unit}
-                      onChange={(e) => setNewInvItem({ ...newInvItem, unit: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      required
+                      placeholder="e.g. Higher Education Monthly Retainer"
+                      value={newInvItem.name}
+                      onChange={(e) => setNewInvItem({ ...newInvItem, name: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Category</label>
+                      <select
+                        value={newInvItem.category}
+                        onChange={(e) => setNewInvItem({ ...newInvItem, category: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      >
+                        <option value="Retainer Partnership">Retainer Partnership</option>
+                        <option value="Lead Acquisition">Lead Acquisition</option>
+                        <option value="B2B Outbound">B2B Outbound</option>
+                        <option value="Campaign Setup">Campaign Setup</option>
+                        <option value="Consultation">Consultation</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Billing Unit</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Per Month, Per 1000 Leads"
+                        value={newInvItem.unit}
+                        onChange={(e) => setNewInvItem({ ...newInvItem, unit: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Standard Rate (₹) *
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="500"
+                      required
+                      placeholder="e.g. 50000"
+                      value={newInvItem.rate}
+                      onChange={(e) => setNewInvItem({ ...newInvItem, rate: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Scope of Deliverables &amp; Details
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="Specify the service deliverables, lead volumes, or engagement terms..."
+                      value={newInvItem.description}
+                      onChange={(e) => setNewInvItem({ ...newInvItem, description: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-none"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Standard Rate (₹) *
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="500"
-                    required
-                    placeholder="e.g. 50000"
-                    value={newInvItem.rate}
-                    onChange={(e) => setNewInvItem({ ...newInvItem, rate: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Scope of Deliverables &amp; Details
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="Specify the service deliverables, lead volumes, or engagement terms..."
-                    value={newInvItem.description}
-                    onChange={(e) => setNewInvItem({ ...newInvItem, description: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-600 focus:outline-none"
-                  />
-                </div>
-
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+                <div className="p-4 pt-3 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0 bg-slate-50/50">
                   <button
                     type="button"
                     onClick={() => setShowAddInventoryModal(false)}
@@ -716,7 +717,6 @@ export default function BillingPage() {
                   </button>
                 </div>
               </form>
-            </div>
             </div>
           </div>
         )}

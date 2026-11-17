@@ -401,24 +401,23 @@ function StudentLeadsContent() {
 
         {/* Update Status Modal */}
         {updatingLead && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div className="fixed inset-0" onClick={() => setUpdatingLead(null)} aria-hidden="true" />
-              <div className="relative z-10 w-full max-w-sm bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-8 animate-scale-in">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Update {updatingLead.name}
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => setUpdatingLead(null)}
-                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setUpdatingLead(null)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-sm bg-white rounded-3xl border border-slate-200/90 shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+              <div className="flex items-center justify-between p-4 pb-3 border-b border-slate-100 shrink-0">
+                <h3 className="text-sm font-bold text-slate-900">
+                  Update {updatingLead.name}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setUpdatingLead(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
 
-              <div className="space-y-3">
+              <div className="p-4 overflow-y-auto space-y-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Counselling Stage</label>
                   <select
@@ -447,170 +446,170 @@ function StudentLeadsContent() {
                     <option value="Dropped">Dropped / Ineligible</option>
                   </select>
                 </div>
-
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                  <button
-                    onClick={() => setUpdatingLead(null)}
-                    className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      const st = (document.getElementById('newStatusSelect') as HTMLSelectElement).value;
-                      const adm = (document.getElementById('newAdmissionSelect') as HTMLSelectElement).value;
-                      handleUpdateStatus(updatingLead.id, st, adm);
-                    }}
-                    className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
-                  >
-                    Save Changes
-                  </button>
-                </div>
               </div>
-            </div>
+
+              <div className="flex items-center justify-end gap-2 p-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
+                <button
+                  onClick={() => setUpdatingLead(null)}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const st = (document.getElementById('newStatusSelect') as HTMLSelectElement).value;
+                    const adm = (document.getElementById('newAdmissionSelect') as HTMLSelectElement).value;
+                    handleUpdateStatus(updatingLead.id, st, adm);
+                  }}
+                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                >
+                  Save Changes
+                </button>
+              </div>
             </div>
           </div>
         )}
 
         {/* Add Student Lead Modal */}
         {showModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div className="fixed inset-0" onClick={() => setShowModal(false)} aria-hidden="true" />
-              <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-8 animate-scale-in">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
-                      <GraduationCap className="w-5 h-5" />
-                    </div>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setShowModal(false)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+              <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+                    <GraduationCap className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">Add New Student Lead</h3>
+                    <p className="text-[11px] text-slate-500">Record a new student admission inquiry</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateLead} className="flex flex-col flex-1 overflow-hidden">
+                <div className="p-5 overflow-y-auto space-y-3.5">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <h3 className="text-base font-bold text-slate-900">Add New Student Lead</h3>
-                      <p className="text-[11px] text-slate-500">Record a new student admission inquiry</p>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Student Name *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Rohan Verma"
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number *</label>
+                      <input
+                        type="tel"
+                        required
+                        placeholder="e.g. 9876543210"
+                        value={form.phone}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      />
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Email</label>
+                      <input
+                        type="email"
+                        placeholder="e.g. rohan@gmail.com"
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Target Course</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. MBA Marketing"
+                        value={form.courseInterest}
+                        onChange={(e) => setForm({ ...form, courseInterest: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Location / City</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Pune, Maharashtra"
+                        value={form.location}
+                        onChange={(e) => setForm({ ...form, location: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Qualification</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. B.Com Graduate"
+                        value={form.qualification}
+                        onChange={(e) => setForm({ ...form, qualification: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Partner College / Client</label>
+                      <select
+                        value={form.clientId}
+                        onChange={(e) => setForm({ ...form, clientId: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Unassigned</option>
+                        {clients.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.companyName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Associated Campaign</label>
+                      <select
+                        value={form.campaignId}
+                        onChange={(e) => setForm({ ...form, campaignId: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Direct / None</option>
+                        {campaigns.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 p-4 pt-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-              <form onSubmit={handleCreateLead} className="space-y-3.5">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Student Name *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Rohan Verma"
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number *</label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="e.g. 9876543210"
-                      value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      placeholder="e.g. rohan@gmail.com"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Target Course</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. MBA Marketing"
-                      value={form.courseInterest}
-                      onChange={(e) => setForm({ ...form, courseInterest: e.target.value })}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Location / City</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Pune, Maharashtra"
-                      value={form.location}
-                      onChange={(e) => setForm({ ...form, location: e.target.value })}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Qualification</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. B.Com Graduate"
-                      value={form.qualification}
-                      onChange={(e) => setForm({ ...form, qualification: e.target.value })}
-                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Partner College / Client</label>
-                    <select
-                      value={form.clientId}
-                      onChange={(e) => setForm({ ...form, clientId: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Unassigned</option>
-                      {clients.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.companyName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Associated Campaign</label>
-                    <select
-                      value={form.campaignId}
-                      onChange={(e) => setForm({ ...form, campaignId: e.target.value })}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Direct / None</option>
-                      {campaigns.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -622,7 +621,6 @@ function StudentLeadsContent() {
                   </button>
                 </div>
               </form>
-            </div>
             </div>
           </div>
         )}

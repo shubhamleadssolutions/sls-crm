@@ -421,11 +421,10 @@ export default function UserManagementPage() {
 
         {/* Modal: Create New User */}
         {showAddModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div className="fixed inset-0" onClick={() => setShowAddModal(false)} aria-hidden="true" />
-              <div className="relative z-10 w-full max-w-xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-left my-8 animate-scale-in">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setShowAddModal(false)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-xl bg-white rounded-3xl shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+                <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
                   <div className="flex items-center gap-2">
                     <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
                       <UserPlus className="w-5 h-5" />
@@ -450,7 +449,8 @@ export default function UserManagementPage() {
                 </div>
               )}
 
-              <form onSubmit={handleCreateUser} className="space-y-4">
+              <form onSubmit={handleCreateUser} className="flex flex-col flex-1 overflow-hidden">
+                <div className="p-5 overflow-y-auto space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -544,11 +544,13 @@ export default function UserManagementPage() {
                   <strong>Permission Info:</strong> {ROLE_INFO[form.role]?.desc}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                </div>
+
+                <div className="flex items-center justify-end gap-3 p-4 pt-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
                   <button
                     type="button"
                     onClick={() => setShowAddModal(false)}
-                    className="px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                    className="px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -562,54 +564,52 @@ export default function UserManagementPage() {
                 </div>
               </form>
             </div>
-            </div>
           </div>
         )}
 
         {/* Modal: Manage / Edit User Profile */}
         {editModalOpen && editingUser && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div
-                className="fixed inset-0"
-                onClick={() => {
-                  setEditModalOpen(false);
-                  setEditingUser(null);
-                }}
-                aria-hidden="true"
-              />
-              <div className="relative z-10 w-full max-w-xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-left my-8 animate-scale-in">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-                      <Edit className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-extrabold text-slate-900">Manage User Profile</h3>
-                      <p className="text-[11px] text-slate-500">
-                        Update credentials, role permissions, and profile details for <strong className="text-slate-800">@{editingUser.username}</strong>
-                      </p>
-                    </div>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div
+              className="fixed inset-0"
+              onClick={() => {
+                setEditModalOpen(false);
+                setEditingUser(null);
+              }}
+              aria-hidden="true"
+            />
+            <div className="relative z-10 w-full max-w-xl bg-white rounded-3xl shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+              <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                    <Edit className="w-5 h-5" />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditModalOpen(false);
-                      setEditingUser(null);
-                    }}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900">Manage User Profile</h3>
+                    <p className="text-[11px] text-slate-500">
+                      Update credentials, role permissions, and profile details for <strong className="text-slate-800">@{editingUser.username}</strong>
+                    </p>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditModalOpen(false);
+                    setEditingUser(null);
+                  }}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-              {error && (
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
-                  {error}
-                </div>
-              )}
-
-              <form onSubmit={handleUpdateUser} className="space-y-4">
+              <form onSubmit={handleUpdateUser} className="flex flex-col flex-1 overflow-hidden">
+                <div className="p-5 overflow-y-auto space-y-4">
+                  {error && (
+                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
+                      {error}
+                    </div>
+                  )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -699,14 +699,16 @@ export default function UserManagementPage() {
                   <strong>Role Description:</strong> {ROLE_INFO[editForm.role]?.desc}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                </div>
+
+                <div className="flex items-center justify-end gap-3 p-4 pt-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
                   <button
                     type="button"
                     onClick={() => {
                       setEditModalOpen(false);
                       setEditingUser(null);
                     }}
-                    className="px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                    className="px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -720,16 +722,14 @@ export default function UserManagementPage() {
                 </div>
               </form>
             </div>
-            </div>
           </div>
         )}
 
         {/* Sensitive Action Confirmation Modal: Deactivate / Activate User */}
         {confirmUserAction && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div className="fixed inset-0" onClick={() => setConfirmUserAction(null)} aria-hidden="true" />
-              <div className="relative z-10 w-full max-w-sm bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-8 animate-scale-in">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setConfirmUserAction(null)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-sm bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
                 <div className="flex items-center gap-3">
                   <div
                     className={`p-2.5 rounded-2xl border ${
@@ -784,7 +784,6 @@ export default function UserManagementPage() {
                   {confirmUserAction.action === 'deactivate' ? 'Yes, Deactivate' : 'Yes, Reactivate'}
                 </button>
               </div>
-            </div>
             </div>
           </div>
         )}

@@ -594,62 +594,63 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
 
         {/* Modal: WhatsApp Direct Message with Template Selection */}
         {showWhatsAppModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div className="fixed inset-0" onClick={() => setShowWhatsAppModal(false)} aria-hidden="true" />
-              <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl space-y-4 text-left my-8 animate-scale-in">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <MessageCircle className="w-5 h-5 text-emerald-600" />
-                    Direct WhatsApp Outreach
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowWhatsAppModal(false)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-              <p className="text-xs text-slate-600">
-                Choose a pre-defined communication template. Variables like <code>{"{{contact_name}}"}</code> and <code>{"{{company_name}}"}</code> are automatically merged:
-              </p>
-
-              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                {templates.map((tpl) => (
-                  <div
-                    key={tpl.id}
-                    onClick={() => setSelectedTemplateText(tpl.content)}
-                    className={`p-3 rounded-2xl border text-xs cursor-pointer transition ${
-                      selectedTemplateText === tpl.content
-                        ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
-                    }`}
-                  >
-                    <p className="font-bold text-slate-900">{tpl.title}</p>
-                    <p className="text-slate-600 mt-1 line-clamp-2">{tpl.content}</p>
-                  </div>
-                ))}
-              </div>
-
-              {selectedTemplateText && (
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Preview & Edit Message:</label>
-                  <textarea
-                    value={selectedTemplateText}
-                    onChange={(e) => setSelectedTemplateText(e.target.value)}
-                    rows={4}
-                    className="w-full p-3 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              )}
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setShowWhatsAppModal(false)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+              <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-emerald-600" />
+                  Direct WhatsApp Outreach
+                </h3>
                 <button
                   type="button"
                   onClick={() => setShowWhatsAppModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700"
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-5 overflow-y-auto space-y-4">
+                <p className="text-xs text-slate-600">
+                  Choose a pre-defined communication template. Variables like <code>{"{{contact_name}}"}</code> and <code>{"{{company_name}}"}</code> are automatically merged:
+                </p>
+
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                  {templates.map((tpl) => (
+                    <div
+                      key={tpl.id}
+                      onClick={() => setSelectedTemplateText(tpl.content)}
+                      className={`p-3 rounded-2xl border text-xs cursor-pointer transition ${
+                        selectedTemplateText === tpl.content
+                          ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20'
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
+                      }`}
+                    >
+                      <p className="font-bold text-slate-900">{tpl.title}</p>
+                      <p className="text-slate-600 mt-1 line-clamp-2">{tpl.content}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {selectedTemplateText && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700">Preview & Edit Message:</label>
+                    <textarea
+                      value={selectedTemplateText}
+                      onChange={(e) => setSelectedTemplateText(e.target.value)}
+                      rows={4}
+                      className="w-full p-3 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 p-4 pt-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
+                <button
+                  type="button"
+                  onClick={() => setShowWhatsAppModal(false)}
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
                 >
                   Cancel
                 </button>
@@ -657,35 +658,33 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
                   type="button"
                   disabled={!selectedTemplateText}
                   onClick={() => openWhatsAppWithTemplate(selectedTemplateText)}
-                  className="inline-flex items-center gap-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold disabled:opacity-50 shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold disabled:opacity-50 shadow-xs cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
                   Launch WhatsApp
                 </button>
               </div>
             </div>
-            </div>
           </div>
         )}
 
         {/* Modal: Log Activity */}
         {showActivityModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div className="fixed inset-0" onClick={() => setShowActivityModal(false)} aria-hidden="true" />
-              <form onSubmit={handleAddActivity} className="relative z-10 w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-4 text-left my-8 animate-scale-in">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <h3 className="text-base font-bold text-slate-900">Log Outreach Activity</h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowActivityModal(false)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setShowActivityModal(false)} aria-hidden="true" />
+            <form onSubmit={handleAddActivity} className="relative z-10 w-full max-w-md bg-white rounded-3xl shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+              <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
+                <h3 className="text-base font-bold text-slate-900">Log Outreach Activity</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowActivityModal(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-              <div className="space-y-3">
+              <div className="p-5 overflow-y-auto space-y-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Outreach Channel</label>
                   <select
@@ -725,44 +724,42 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 p-4 pt-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
                 <button
                   type="button"
                   onClick={() => setShowActivityModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700"
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs"
                 >
                   Record Activity
                 </button>
               </div>
             </form>
           </div>
-          </div>
         )}
 
         {/* Modal: Schedule Follow-up */}
         {showFollowUpModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div className="fixed inset-0" onClick={() => setShowFollowUpModal(false)} aria-hidden="true" />
-              <form onSubmit={handleScheduleFollowUp} className="relative z-10 w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-4 text-left my-8 animate-scale-in">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <h3 className="text-base font-bold text-slate-900">Schedule Follow-up</h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowFollowUpModal(false)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setShowFollowUpModal(false)} aria-hidden="true" />
+            <form onSubmit={handleScheduleFollowUp} className="relative z-10 w-full max-w-md bg-white rounded-3xl shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+              <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
+                <h3 className="text-base font-bold text-slate-900">Schedule Follow-up</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowFollowUpModal(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-              <div className="space-y-3">
+              <div className="p-5 overflow-y-auto space-y-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Follow-up Date</label>
                   <input
@@ -801,44 +798,42 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 p-4 pt-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
                 <button
                   type="button"
                   onClick={() => setShowFollowUpModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700"
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs"
                 >
                   Save Schedule
                 </button>
               </div>
             </form>
           </div>
-          </div>
         )}
 
         {/* Modal: Add Note */}
         {showNoteModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div className="fixed inset-0" onClick={() => setShowNoteModal(false)} aria-hidden="true" />
-              <form onSubmit={handleAddNote} className="relative z-10 w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-4 text-left my-8 animate-scale-in">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <h3 className="text-base font-bold text-slate-900">Add Internal Note</h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowNoteModal(false)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setShowNoteModal(false)} aria-hidden="true" />
+            <form onSubmit={handleAddNote} className="relative z-10 w-full max-w-md bg-white rounded-3xl shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+              <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
+                <h3 className="text-base font-bold text-slate-900">Add Internal Note</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowNoteModal(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-              <div>
+              <div className="p-5 overflow-y-auto">
                 <textarea
                   rows={4}
                   required
@@ -849,51 +844,49 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 p-4 pt-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
                 <button
                   type="button"
                   onClick={() => setShowNoteModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700"
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs"
                 >
                   Add Note
                 </button>
               </div>
             </form>
           </div>
-          </div>
         )}
 
         {/* Modal: Convert to Client (Section 12 of PDF) */}
         {showConvertModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div className="fixed inset-0" onClick={() => setShowConvertModal(false)} aria-hidden="true" />
-              <form onSubmit={handleConvertToClient} className="relative z-10 w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-4 text-left my-8 animate-scale-in">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-indigo-600" />
-                    Convert Prospect &rarr; Client
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowConvertModal(false)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setShowConvertModal(false)} aria-hidden="true" />
+            <form onSubmit={handleConvertToClient} className="relative z-10 w-full max-w-md bg-white rounded-3xl shadow-2xl text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+              <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-indigo-600" />
+                  Convert Prospect &rarr; Client
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowConvertModal(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-              <p className="text-xs text-slate-600">
-                Converting <strong>{prospect.companyName}</strong> automatically sets status to Won and generates an active Client ID without re-typing.
-              </p>
+              <div className="p-5 overflow-y-auto space-y-3">
+                <p className="text-xs text-slate-600">
+                  Converting <strong>{prospect.companyName}</strong> automatically sets status to Won and generates an active Client ID without re-typing.
+                </p>
 
-              <div className="space-y-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Service</label>
                   <input
@@ -930,66 +923,62 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 p-4 pt-3 border-t border-slate-100 shrink-0 bg-slate-50/50">
                 <button
                   type="button"
                   onClick={() => setShowConvertModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700"
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs"
                 >
                   Confirm Conversion
                 </button>
               </div>
             </form>
           </div>
-          </div>
         )}
-
 
         {/* Sensitive Action: Archive Confirmation Modal */}
         {showArchiveConfirm && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div className="fixed inset-0" onClick={() => setShowArchiveConfirm(false)} aria-hidden="true" />
-              <div className="relative z-10 w-full max-w-sm bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-8 animate-scale-in">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100">
-                    <Trash2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900">Archive Prospect Record?</h3>
-                    <p className="text-[11px] text-slate-500">Sales pipeline protection</p>
-                  </div>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setShowArchiveConfirm(false)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-sm bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100">
+                  <Trash2 className="w-5 h-5" />
                 </div>
-
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Are you sure you want to archive <strong className="text-slate-900">{prospect.companyName}</strong> ({prospect.prospectCode})? This removes the prospect from your active pipeline while safely preserving all historical interactions in the audit log.
-                </p>
-
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => setShowArchiveConfirm(false)}
-                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setShowArchiveConfirm(false);
-                      await executeArchive();
-                    }}
-                    className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-xs shadow-rose-500/20 cursor-pointer"
-                  >
-                    Yes, Archive Record
-                  </button>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">Archive Prospect Record?</h3>
+                  <p className="text-[11px] text-slate-500">Sales pipeline protection</p>
                 </div>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Are you sure you want to archive <strong className="text-slate-900">{prospect.companyName}</strong> ({prospect.prospectCode})? This removes the prospect from your active pipeline while safely preserving all historical interactions in the audit log.
+              </p>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowArchiveConfirm(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setShowArchiveConfirm(false);
+                    await executeArchive();
+                  }}
+                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-xs shadow-rose-500/20 cursor-pointer"
+                >
+                  Yes, Archive Record
+                </button>
               </div>
             </div>
           </div>
@@ -997,44 +986,42 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
 
         {/* Sensitive Action: Mark as Lost / Not Interested Confirmation Modal */}
         {pendingStatusConfirm && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-            <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-              <div className="fixed inset-0" onClick={() => setPendingStatusConfirm(null)} aria-hidden="true" />
-              <div className="relative z-10 w-full max-w-sm bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-8 animate-scale-in">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200">
-                    <AlertCircle className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900">Update Funnel Status?</h3>
-                    <p className="text-[11px] text-slate-500">Confirm pipeline stage change</p>
-                  </div>
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div className="fixed inset-0" onClick={() => setPendingStatusConfirm(null)} aria-hidden="true" />
+            <div className="relative z-10 w-full max-w-sm bg-white rounded-3xl border border-slate-200/90 shadow-2xl p-6 space-y-4 text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200">
+                  <AlertCircle className="w-5 h-5" />
                 </div>
-
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  You are about to mark <strong className="text-slate-900">{prospect.companyName}</strong> as <strong className="text-amber-800">{STATUS_LABELS[pendingStatusConfirm]?.label || pendingStatusConfirm}</strong>. This will stop regular outreach reminders for this lead.
-                </p>
-
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => setPendingStatusConfirm(null)}
-                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const st = pendingStatusConfirm;
-                      setPendingStatusConfirm(null);
-                      await executeStatusChange(st);
-                    }}
-                    className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
-                  >
-                    Confirm Change
-                  </button>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">Update Funnel Status?</h3>
+                  <p className="text-[11px] text-slate-500">Confirm pipeline stage change</p>
                 </div>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed">
+                You are about to mark <strong className="text-slate-900">{prospect.companyName}</strong> as <strong className="text-amber-800">{STATUS_LABELS[pendingStatusConfirm]?.label || pendingStatusConfirm}</strong>. This will stop regular outreach reminders for this lead.
+              </p>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setPendingStatusConfirm(null)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const st = pendingStatusConfirm;
+                    setPendingStatusConfirm(null);
+                    await executeStatusChange(st);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                >
+                  Confirm Change
+                </button>
               </div>
             </div>
           </div>

@@ -432,114 +432,115 @@ export default function MeetingsPage() {
       {/* SCHEDULE MEETING MODAL (Administrative roles only)                        */}
       {/* ========================================================================= */}
       {showScheduleModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs">
-          <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-            <div className="fixed inset-0" onClick={() => setShowScheduleModal(false)} aria-hidden="true" />
-            <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 space-y-4 text-left my-8 animate-scale-in">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900">Schedule Client Meeting</h3>
-                  <p className="text-[11px] text-slate-500">Authorized by Leadership (MD, CEO, Account Manager, IT Manager)</p>
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+          <div className="fixed inset-0" onClick={() => setShowScheduleModal(false)} aria-hidden="true" />
+          <div className="relative z-10 w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 text-left my-auto max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
+            <div className="flex items-center justify-between p-5 pb-3 border-b border-slate-100 shrink-0">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Schedule Client Meeting</h3>
+                <p className="text-[11px] text-slate-500">Authorized by Leadership (MD, CEO, Account Manager, IT Manager)</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowScheduleModal(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto space-y-4 text-xs">
+              {scheduleError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
+                  {scheduleError}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowScheduleModal(false)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+              )}
 
-            {scheduleError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
-                {scheduleError}
-              </div>
-            )}
-
-            <form onSubmit={handleScheduleMeeting} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-slate-700 font-bold mb-1">Prospect / Client Institution</label>
-                <select
-                  value={form.prospectId}
-                  onChange={(e) => setForm({ ...form, prospectId: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-blue-500 font-medium"
-                >
-                  <option value="">-- General Team / Direct Institutional Meeting --</option>
-                  {prospects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.companyName} ({p.contactPerson || 'Contact'})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-slate-700 font-bold mb-1">Meeting Topic / Title *</label>
-                <input
-                  type="text"
-                  required
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="e.g. Q4 Admissions Outreach & Campaign Review"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-blue-500 font-medium"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <form id="scheduleMeetingForm" onSubmit={handleScheduleMeeting} className="space-y-4">
                 <div>
-                  <label className="block text-slate-700 font-bold mb-1">Date &amp; Time *</label>
+                  <label className="block text-slate-700 font-bold mb-1">Prospect / Client Institution</label>
+                  <select
+                    value={form.prospectId}
+                    onChange={(e) => setForm({ ...form, prospectId: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-blue-500 font-medium"
+                  >
+                    <option value="">-- General Team / Direct Institutional Meeting --</option>
+                    {prospects.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.companyName} ({p.contactPerson || 'Contact'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Meeting Topic / Title *</label>
                   <input
-                    type="datetime-local"
+                    type="text"
                     required
-                    value={form.meetingDate}
-                    onChange={(e) => setForm({ ...form, meetingDate: e.target.value })}
+                    value={form.title}
+                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    placeholder="e.g. Q4 Admissions Outreach & Campaign Review"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-blue-500 font-medium"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">Duration (Minutes)</label>
-                  <select
-                    value={form.duration}
-                    onChange={(e) => setForm({ ...form, duration: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-blue-500 font-medium"
-                  >
-                    <option value="30">30 Minutes</option>
-                    <option value="45">45 Minutes</option>
-                    <option value="60">60 Minutes</option>
-                    <option value="90">90 Minutes</option>
-                  </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">Date &amp; Time *</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={form.meetingDate}
+                      onChange={(e) => setForm({ ...form, meetingDate: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-blue-500 font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-bold mb-1">Duration (Minutes)</label>
+                    <select
+                      value={form.duration}
+                      onChange={(e) => setForm({ ...form, duration: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-blue-500 font-medium"
+                    >
+                      <option value="30">30 Minutes</option>
+                      <option value="45">45 Minutes</option>
+                      <option value="60">60 Minutes</option>
+                      <option value="90">90 Minutes</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-slate-700 font-bold mb-1">Agenda &amp; Discussion Points</label>
-                <textarea
-                  rows={3}
-                  value={form.agenda}
-                  onChange={(e) => setForm({ ...form, agenda: e.target.value })}
-                  placeholder="Key points: Meta ad volume review, verified lead distribution, fee retainer agreement..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-blue-500 resize-none font-medium"
-                />
-              </div>
+                <div>
+                  <label className="block text-slate-700 font-bold mb-1">Agenda &amp; Discussion Points</label>
+                  <textarea
+                    rows={3}
+                    value={form.agenda}
+                    onChange={(e) => setForm({ ...form, agenda: e.target.value })}
+                    placeholder="Key points: Meta ad volume review, verified lead distribution, fee retainer agreement..."
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-blue-500 resize-none font-medium"
+                  />
+                </div>
+              </form>
+            </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowScheduleModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-sm shadow-blue-500/20"
-                >
-                  Schedule Meeting
-                </button>
-              </div>
-            </form>
-          </div>
+            <div className="p-4 pt-3 border-t border-slate-100 flex items-center justify-end gap-2 shrink-0 bg-slate-50/50">
+              <button
+                type="button"
+                onClick={() => setShowScheduleModal(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="scheduleMeetingForm"
+                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs hover:shadow transition"
+              >
+                Schedule Meeting
+              </button>
+            </div>
           </div>
         </div>
       )}

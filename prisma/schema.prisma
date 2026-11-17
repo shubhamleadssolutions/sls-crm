@@ -124,6 +124,7 @@ model User {
   auditLogs         AuditLog[]
   chatMessages      ChatMessage[]
   attendances       Attendance[]
+  loginRecords      LoginRecord[]
 
   @@map("users")
 }
@@ -507,4 +508,28 @@ model Attendance {
 
   @@index([userId, date])
   @@map("attendances")
+}
+
+model LoginRecord {
+  id            String   @id @default(cuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  username      String
+  name          String
+  role          String?
+  platform      String   // "Computer", "Mobile", "Tablet"
+  device        String?  // e.g. "Windows PC", "MacBook", "iPhone", "Android Phone"
+  os            String?  // e.g. "Windows 11", "macOS", "iOS", "Android", "Linux"
+  browser       String?  // e.g. "Chrome 131", "Safari", "Edge", "Firefox"
+  ipAddress     String?
+  userAgent     String?  @db.Text
+  status        String   @default("SUCCESS") // "SUCCESS", "FAILED"
+  failureReason String?
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([platform])
+  @@index([status])
+  @@map("login_records")
 }
