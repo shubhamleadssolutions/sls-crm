@@ -522,7 +522,7 @@ function StudioRoom() {
             <div className="flex items-center gap-2 text-[11px] text-slate-400">
               <span>Client: <span className="text-slate-300 font-medium">{clientName}</span></span>
               <span>&bull;</span>
-              <span className="font-mono text-emerald-400 font-bold">{formatTimer(seconds)}</span>
+              <span className="font-time text-emerald-400 font-bold">{formatTimer(seconds)}</span>
             </div>
           </div>
         </div>

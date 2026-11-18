@@ -612,23 +612,23 @@ export default function StaffAttendancePage() {
                         {/* Shift */}
                         <td className="px-4 py-4">
                           <span className="font-semibold text-slate-800">{m.designation || m.role}</span>
-                          <div className="text-[10px] text-slate-400 font-mono">{m.shiftTiming}</div>
+                          <div className="text-[10px] text-slate-400 font-time">{m.shiftTiming}</div>
                         </td>
 
                         {/* Status */}
                         <td className="px-4 py-4 text-center">{getStatusBadge(m.todayStatus)}</td>
 
                         {/* Punch In */}
-                        <td className="px-4 py-4 text-center font-mono font-medium text-slate-800">
+                        <td className="px-4 py-4 text-center font-time font-bold text-slate-800">
                           {formatTime(m.punchInToday)}
                         </td>
 
                         {/* Punch Out */}
-                        <td className="px-4 py-4 text-center font-mono font-medium text-slate-800">
+                        <td className="px-4 py-4 text-center font-time font-bold text-slate-800">
                           {m.punchOutToday ? (
                             formatTime(m.punchOutToday)
                           ) : m.punchInToday ? (
-                            <span className="text-emerald-600 font-semibold flex items-center justify-center gap-1">
+                            <span className="text-emerald-600 font-semibold flex items-center justify-center gap-1 font-time">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                               Active In Shift
                             </span>
@@ -638,7 +638,7 @@ export default function StaffAttendancePage() {
                         </td>
 
                         {/* Hours */}
-                        <td className="px-4 py-4 text-center font-mono font-bold text-indigo-700">
+                        <td className="px-4 py-4 text-center font-time font-bold text-indigo-700">
                           {m.workingHoursToday ? `${m.workingHoursToday} hrs` : m.punchInToday ? 'In Progress' : '-'}
                         </td>
 
@@ -971,24 +971,24 @@ export default function StaffAttendancePage() {
                           {/* Shift */}
                           <td className="px-4 py-4">
                             <span className="font-semibold text-slate-800">{rec.designation || rec.role}</span>
-                            <div className="text-[10px] text-slate-400 font-mono">{rec.shiftTiming}</div>
+                            <div className="text-[10px] text-slate-400 font-time">{rec.shiftTiming}</div>
                           </td>
 
                           {/* Status */}
                           <td className="px-4 py-4 text-center">{getStatusBadge(rec.status)}</td>
 
                           {/* Punch In */}
-                          <td className="px-4 py-4 text-center font-mono font-medium text-slate-800">
+                          <td className="px-4 py-4 text-center font-time font-bold text-slate-800">
                             {formatTime(rec.punchIn)}
                           </td>
 
                           {/* Punch Out */}
-                          <td className="px-4 py-4 text-center font-mono font-medium text-slate-800">
+                          <td className="px-4 py-4 text-center font-time font-bold text-slate-800">
                             {formatTime(rec.punchOut)}
                           </td>
 
                           {/* Duration */}
-                          <td className="px-4 py-4 text-center font-mono font-bold text-indigo-700">
+                          <td className="px-4 py-4 text-center font-time font-bold text-indigo-700">
                             {rec.workingHours ? `${rec.workingHours} hrs` : rec.punchIn ? 'Open Shift' : '-'}
                           </td>
 
@@ -1073,22 +1073,22 @@ export default function StaffAttendancePage() {
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 font-bold uppercase">Shift Hours</span>
-                    <p className="font-mono font-bold text-slate-800 mt-0.5">{inspectRecord.shiftTiming}</p>
+                    <p className="font-time font-bold text-slate-800 mt-0.5">{inspectRecord.shiftTiming}</p>
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 font-bold uppercase">Punch In</span>
-                    <p className="font-mono font-bold text-slate-800 mt-0.5">{formatTime(inspectRecord.punchIn)}</p>
+                    <p className="font-time font-bold text-slate-800 mt-0.5">{formatTime(inspectRecord.punchIn)}</p>
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 font-bold uppercase">Punch Out</span>
-                    <p className="font-mono font-bold text-slate-800 mt-0.5">{formatTime(inspectRecord.punchOut)}</p>
+                    <p className="font-time font-bold text-slate-800 mt-0.5">{formatTime(inspectRecord.punchOut)}</p>
                   </div>
                 </div>
 
                 {/* Working hours & location */}
                 <div className="flex items-center justify-between px-3 py-2 bg-indigo-50/60 rounded-xl border border-indigo-100">
                   <span className="font-bold text-indigo-900">Total Duration:</span>
-                  <span className="font-mono font-extrabold text-indigo-700 text-sm">
+                  <span className="font-time font-extrabold text-indigo-700 text-sm">
                     {inspectRecord.workingHours ? `${inspectRecord.workingHours} hours` : inspectRecord.punchIn ? 'Currently in shift' : '-'}
                   </span>
                 </div>

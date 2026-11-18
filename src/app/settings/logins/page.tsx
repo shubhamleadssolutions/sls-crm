@@ -300,7 +300,7 @@ export default function LoginActivityPage() {
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search user, @username, device, OS, IP..."
+              placeholder="Search user, @username, IP..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-600"
@@ -323,16 +323,6 @@ export default function LoginActivityPage() {
               <option value="Mobile">📱 Mobile (Smartphones)</option>
               <option value="Tablet">📟 Tablet</option>
             </select>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none"
-            >
-              <option value="ALL">All Status</option>
-              <option value="SUCCESS">✅ Successful Logins</option>
-              <option value="FAILED">❌ Failed / Blocked</option>
-            </select>
           </div>
         </div>
 
@@ -354,24 +344,21 @@ export default function LoginActivityPage() {
                 <tr>
                   <th className="py-3.5 px-4 sm:px-6">Team Member</th>
                   <th className="py-3.5 px-4">Platform</th>
-                  <th className="py-3.5 px-4">Device &amp; OS</th>
-                  <th className="py-3.5 px-4">Browser</th>
                   <th className="py-3.5 px-4">Client IP</th>
-                  <th className="py-3.5 px-4">Status</th>
                   <th className="py-3.5 px-4 sm:px-6 text-right">Login Time (IST)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-400">
+                    <td colSpan={4} className="py-12 text-center text-slate-400">
                       <RefreshCw className="w-6 h-6 animate-spin mx-auto text-purple-600 mb-2" />
                       <p className="font-semibold text-xs">Loading login activity log...</p>
                     </td>
                   </tr>
                 ) : records.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-slate-400">
+                    <td colSpan={4} className="py-12 text-center text-slate-400">
                       <ShieldCheck className="w-8 h-8 mx-auto text-slate-300 mb-2" />
                       <p className="font-bold text-slate-700 text-sm">No login records found</p>
                       <p className="text-xs text-slate-400 mt-1">Try clearing your search query or filters.</p>
@@ -380,7 +367,6 @@ export default function LoginActivityPage() {
                 ) : (
                   records.map((r) => {
                     const roleInfo = ROLE_DISPLAY[r.role] || { label: r.role, badge: 'bg-slate-100 text-slate-700 border-slate-200' };
-                    const isSuccess = r.status === 'SUCCESS';
                     return (
                       <tr
                         key={r.id}
@@ -413,21 +399,6 @@ export default function LoginActivityPage() {
                           </div>
                         </td>
 
-                        {/* Device & OS */}
-                        <td className="py-3.5 px-4">
-                          <div>
-                            <p className="font-bold text-slate-800">{r.device}</p>
-                            <p className="text-[11px] text-slate-400">{r.os}</p>
-                          </div>
-                        </td>
-
-                        {/* Web Browser */}
-                        <td className="py-3.5 px-4">
-                          <span className="px-2 py-1 rounded-lg bg-slate-100 text-slate-700 font-semibold text-[11px]">
-                            {r.browser}
-                          </span>
-                        </td>
-
                         {/* IP Address */}
                         <td className="py-3.5 px-4">
                           <span className="font-mono text-xs text-slate-600 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
@@ -435,31 +406,9 @@ export default function LoginActivityPage() {
                           </span>
                         </td>
 
-                        {/* Status */}
-                        <td className="py-3.5 px-4">
-                          {isSuccess ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Success</span>
-                            </span>
-                          ) : (
-                            <div className="inline-flex flex-col">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                                <XCircle className="w-3.5 h-3.5" />
-                                <span>Failed</span>
-                              </span>
-                              {r.failureReason && (
-                                <span className="text-[10px] text-rose-500 mt-0.5 max-w-[140px] truncate" title={r.failureReason}>
-                                  {r.failureReason}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </td>
-
-                        {/* IST Timestamp */}
+                        {/* IST Timestamp in SF Pro font */}
                         <td className="py-3.5 px-4 sm:px-6 text-right">
-                          <p className="font-mono font-bold text-slate-800">
+                          <p className="font-time font-bold text-slate-800 text-xs">
                             {new Date(r.createdAt).toLocaleTimeString('en-IN', {
                               hour: '2-digit',
                               minute: '2-digit',
@@ -468,7 +417,7 @@ export default function LoginActivityPage() {
                               timeZone: 'Asia/Kolkata',
                             })}
                           </p>
-                          <p className="text-[10px] text-slate-400">
+                          <p className="text-[10px] text-slate-400 font-time">
                             {formatDate(r.createdAt)}
                           </p>
                         </td>
@@ -588,7 +537,7 @@ export default function LoginActivityPage() {
                 {/* Timestamp */}
                 <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
                   <span>Exact Time (IST):</span>
-                  <span className="font-mono font-bold text-slate-800">
+                  <span className="font-time font-bold text-slate-800">
                     {new Date(selectedRecord.createdAt).toLocaleString('en-IN', {
                       timeZone: 'Asia/Kolkata',
                       dateStyle: 'full',

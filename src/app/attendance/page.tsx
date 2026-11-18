@@ -694,7 +694,7 @@ export default function AttendancePage() {
                   {/* Working Hours Live Counter */}
                   <div>
                     <p className="text-xs text-slate-400 font-medium">Logged Shift Duration</p>
-                    <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white mt-1">
+                    <div className="text-3xl sm:text-4xl font-black font-time tracking-tight text-white mt-1">
                       {isCheckedIn ? (
                         <span className="text-emerald-300">{getActiveDuration() || '00h 00m 00s'}</span>
                       ) : isShiftCompleted ? (
@@ -835,7 +835,7 @@ export default function AttendancePage() {
                           {shiftConfig.roleGroup}
                         </span>
                       </div>
-                      <p className="text-base font-black text-blue-950 font-mono">
+                      <p className="text-base font-black text-blue-950 font-time">
                         {shiftConfig.shiftStart} – {shiftConfig.shiftEnd}
                       </p>
                       <p className="text-[10px] text-blue-700 font-medium">
@@ -851,15 +851,15 @@ export default function AttendancePage() {
                       <div className="grid grid-cols-1 gap-1 text-[11px]">
                         <div className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-100">
                           <span className="font-semibold text-slate-700">CEO &amp; MD</span>
-                          <span className="font-mono font-bold text-slate-900">4:00 PM – 9:00 PM</span>
+                          <span className="font-time font-bold text-slate-900">4:00 PM – 9:00 PM</span>
                         </div>
                         <div className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-100">
                           <span className="font-semibold text-slate-700">IT &amp; Account Manager</span>
-                          <span className="font-mono font-bold text-slate-900">2:00 PM – 8:00 PM</span>
+                          <span className="font-time font-bold text-slate-900">2:00 PM – 8:00 PM</span>
                         </div>
                         <div className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-100">
                           <span className="font-semibold text-slate-700">Other Staff (Sales, BD, Mkt)</span>
-                          <span className="font-mono font-bold text-slate-900">12:00 PM – 8:00 PM</span>
+                          <span className="font-time font-bold text-slate-900">12:00 PM – 8:00 PM</span>
                         </div>
                       </div>
                     </div>
@@ -889,7 +889,7 @@ export default function AttendancePage() {
                   </div>
                 </div>
                 <div className="flex items-baseline gap-1.5 mt-2">
-                  <span className="text-2xl sm:text-3xl font-black text-blue-700 font-mono">
+                  <span className="text-2xl sm:text-3xl font-black text-blue-700 font-time">
                     {stats.attendancePercentage}%
                   </span>
                   <span
@@ -933,7 +933,7 @@ export default function AttendancePage() {
                     <UserCheck className="w-4 h-4" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-black text-emerald-700 mt-2 font-mono">
+                <p className="text-2xl sm:text-3xl font-black text-emerald-700 mt-2 font-time">
                   {stats.totalPresent} <span className="text-xs font-semibold text-emerald-600">days</span>
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5 truncate">
@@ -949,7 +949,7 @@ export default function AttendancePage() {
                     <UserX className="w-4 h-4" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-black text-rose-700 mt-2 font-mono">
+                <p className="text-2xl sm:text-3xl font-black text-rose-700 mt-2 font-time">
                   {stats.totalAbsent} <span className="text-xs font-semibold text-rose-600">days</span>
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5 truncate">Working days missed</p>
@@ -963,7 +963,7 @@ export default function AttendancePage() {
                     <Palmtree className="w-4 h-4" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-black text-purple-700 mt-2 font-mono">
+                <p className="text-2xl sm:text-3xl font-black text-purple-700 mt-2 font-time">
                   {stats.totalLeave} <span className="text-xs font-semibold text-purple-600">days</span>
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5 truncate">Approved leaves</p>
@@ -977,7 +977,7 @@ export default function AttendancePage() {
                     <Timer className="w-4 h-4" />
                   </div>
                 </div>
-                <p className="text-2xl sm:text-3xl font-black text-blue-700 mt-2 font-mono">
+                <p className="text-2xl sm:text-3xl font-black text-blue-700 mt-2 font-time">
                   {stats.avgDailyHours} <span className="text-xs font-semibold text-blue-600">hrs/day</span>
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5 truncate">Logged shift average</p>
@@ -1496,7 +1496,7 @@ export default function AttendancePage() {
               <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between">
                 <div>
                   <p className="text-[10px] uppercase font-bold text-slate-400">Current Server Time</p>
-                  <p className="text-base font-black font-mono text-slate-900">
+                  <p className="text-base font-black font-time text-slate-900">
                     {currentTime ? currentTime.toLocaleTimeString('en-IN', { hour12: true }) : '--:--:--'}
                   </p>
                 </div>
@@ -1650,13 +1650,13 @@ export default function AttendancePage() {
                 <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between">
                   <div>
                     <p className="text-[10px] uppercase font-bold text-slate-400">Current Server Time</p>
-                    <p className="text-base font-black font-mono text-slate-900">
+                    <p className="text-base font-black font-time text-slate-900">
                       {currentTime ? currentTime.toLocaleTimeString('en-IN', { hour12: true }) : '--:--:--'}
                     </p>
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] uppercase font-bold text-slate-400">Calculated Shift Duration</span>
-                    <p className="text-sm font-black font-mono text-blue-600">
+                    <p className="text-sm font-black font-time text-blue-600">
                       {getActiveDuration() || 'Computing...'}
                     </p>
                   </div>
@@ -1776,7 +1776,7 @@ export default function AttendancePage() {
               <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase">Punch In</span>
-                  <p className="font-mono font-bold text-slate-900">
+                  <p className="font-time font-bold text-slate-900">
                     {selectedDayDetails.record?.punchIn
                       ? new Date(selectedDayDetails.record.punchIn).toLocaleTimeString('en-IN', {
                           hour: '2-digit',
@@ -1788,7 +1788,7 @@ export default function AttendancePage() {
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase">Punch Out</span>
-                  <p className="font-mono font-bold text-slate-900">
+                  <p className="font-time font-bold text-slate-900">
                     {selectedDayDetails.record?.punchOut
                       ? new Date(selectedDayDetails.record.punchOut).toLocaleTimeString('en-IN', {
                           hour: '2-digit',
@@ -2118,7 +2118,7 @@ export default function AttendancePage() {
                         <div key={dateKey} className="p-3.5 hover:bg-slate-50 transition space-y-2 text-xs">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
-                              <span className="font-mono font-bold text-slate-900">
+                              <span className="font-time font-bold text-slate-900">
                                 {new Date(dateKey + 'T00:00:00Z').toLocaleDateString('en-IN', {
                                   weekday: 'short',
                                   day: '2-digit',
@@ -2131,7 +2131,7 @@ export default function AttendancePage() {
                               </span>
                             </div>
 
-                            <div className="flex items-center gap-3 text-[11px] font-mono text-slate-600">
+                            <div className="flex items-center gap-3 text-[11px] font-time text-slate-600">
                               {rec.punchIn && (
                                 <span>
                                   In:{' '}
@@ -2157,7 +2157,7 @@ export default function AttendancePage() {
                                 </span>
                               )}
                               {rec.workingHours ? (
-                                <span className="text-blue-700 font-bold">
+                                <span className="text-blue-700 font-bold font-time">
                                   {rec.workingHours} hrs
                                 </span>
                               ) : null}

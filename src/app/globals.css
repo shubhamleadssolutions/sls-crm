@@ -20,6 +20,13 @@
   letter-spacing: -0.011em;
 }
 
+/* SF Pro Time Standard for accurate tabular numbers across all CRM timestamps and clocks */
+.font-time {
+  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif !important;
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background-color: rgb(var(--background-rgb));

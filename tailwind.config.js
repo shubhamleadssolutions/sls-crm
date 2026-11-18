@@ -22,6 +22,10 @@ module.exports = {
           950: '#142356',
         },
       },
+      fontFamily: {
+        sf: ['"SF Pro"', '-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'sans-serif'],
+        time: ['"SF Pro"', '-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'sans-serif'],
+      },
     },
   },
   plugins: [],
