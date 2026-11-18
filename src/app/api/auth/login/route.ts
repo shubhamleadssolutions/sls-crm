@@ -8,15 +8,15 @@ export async function POST(req: Request) {
     const { username, password } = await req.json();
     const deviceInfo = detectDeviceInfo(req);
 
-    const rawUsername = (username || '').trim();
+    const rawUsername = (username || '').trim().replace(/^@+/, '').trim();
     const cleanUsername = rawUsername.toLowerCase();
 
     if (!cleanUsername || !password) {
       return NextResponse.json({ error: 'Username and password are required' }, { status: 400 });
     }
 
-    // Find user strictly by username (100% case-insensitive lookup)
-    const user = await prisma.user.findFirst({
+    // Find user strictly by username or internal email (100% case-insensitive lookup)
+    let user = await prisma.user.findFirst({
       where: {
         OR: [
           { username: cleanUsername },
@@ -25,9 +25,25 @@ export async function POST(req: Request) {
           { username: { equals: rawUsername, mode: 'insensitive' } },
           { email: `${cleanUsername}@sls.internal` },
           { email: { equals: `${cleanUsername}@sls.internal`, mode: 'insensitive' } },
+          { email: cleanUsername },
+          { email: { equals: cleanUsername, mode: 'insensitive' } },
         ],
       },
     });
+
+    // Fallback: If not found, raw SQL LOWER() match across users table
+    if (!user) {
+      const fallbackRows: any = await prisma.$queryRaw`
+        SELECT * FROM "users"
+        WHERE LOWER(username) = LOWER(${cleanUsername})
+           OR LOWER(email) = LOWER(${cleanUsername})
+           OR LOWER(email) = LOWER(${cleanUsername + '@sls.internal'})
+        LIMIT 1
+      `;
+      if (fallbackRows && fallbackRows.length > 0) {
+        user = fallbackRows[0];
+      }
+    }
 
     if (!user) {
       // Record failed attempt for security audit

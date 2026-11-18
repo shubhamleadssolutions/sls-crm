@@ -475,7 +475,7 @@ export default function UserManagementPage() {
                       required
                       placeholder="e.g. shubham.s"
                       value={form.username}
-                      onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase().trim() })}
+                      onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase().replace(/^@+/, '').trim() })}
                       autoCapitalize="none"
                       autoCorrect="off"
                       spellCheck="false"
