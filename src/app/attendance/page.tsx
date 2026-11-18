@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import AppLayout from '@/components/AppLayout';
+import Link from 'next/link';
 import {
   Clock,
   CheckCircle2,
@@ -462,52 +463,34 @@ export default function AttendancePage() {
   return (
     <AppLayout>
       <div className="space-y-6 max-w-6xl mx-auto animate-fade-in pb-12">
-        {/* Navigation Tabs Header */}
+        {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/90 shadow-xs">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">
               <Clock className="w-4 h-4" />
-              <span>SLS Attendance &amp; Productivity System</span>
+              <span>Personal Attendance Portal</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Workforce Attendance &amp; Daily Reporting
+              My Attendance &amp; Productivity
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Live automated check-in with daily tasks and calendar-wise performance records.
+              Live automated check-in, active shift tracking, daily task goals, and personal performance history.
             </p>
           </div>
 
-          {/* Primary Tabs (My Attendance for all; Staff Record restricted to CEO/MD) */}
-          <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl self-start sm:self-auto shrink-0">
-            <button
-              onClick={() => setActiveTab('my')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
-                activeTab === 'my'
-                  ? 'bg-white text-blue-600 shadow-xs font-black'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+          {/* Quick link for CEO & MD to Staff Attendance */}
+          {isExecutive && (
+            <Link
+              href="/attendance/staff"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold transition shadow-xs self-start sm:self-auto cursor-pointer"
             >
-              <UserCheck className="w-4 h-4" />
-              <span>My Attendance</span>
-            </button>
-
-            {isExecutive && (
-              <button
-                onClick={() => setActiveTab('staff')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
-                  activeTab === 'staff'
-                    ? 'bg-white text-indigo-600 shadow-xs font-black'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Users className="w-4 h-4" />
-                <span>Staff Attendance Record</span>
-                <span className="text-[9px] font-bold bg-indigo-100 text-indigo-800 px-1.5 py-0.2 rounded-full">
-                  CEO / MD
-                </span>
-              </button>
-            )}
-          </div>
+              <Users className="w-4 h-4 text-indigo-600" />
+              <span>Staff Attendance (Executive Panel) &rarr;</span>
+              <span className="text-[9px] font-black bg-indigo-200 text-indigo-900 px-1.5 py-0.5 rounded-full">
+                CEO / MD
+              </span>
+            </Link>
+          )}
         </div>
 
         {/* Global Alert Notification */}
@@ -678,11 +661,10 @@ export default function AttendancePage() {
         </div>
 
         {/* ========================================================================= */}
-        {/* TAB 1: MY ATTENDANCE (EVERY EMPLOYEE INCLUDING CEO & MD)                  */}
+        {/* PERSONAL ATTENDANCE WORKSPACE                                             */}
         {/* ========================================================================= */}
-        {activeTab === 'my' && (
-          <div className="space-y-6">
-            {/* Shift Action Hero Card */}
+        <div className="space-y-6">
+          {/* Shift Action Hero Card */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white p-6 sm:p-8 rounded-3xl shadow-xl border border-slate-700/50 relative overflow-hidden flex flex-col justify-between">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -1160,12 +1142,8 @@ export default function AttendancePage() {
               </div>
             </div>
           </div>
-        )}
 
-        {/* ========================================================================= */}
-        {/* TAB 2: STAFF ATTENDANCE RECORD (ACCESSIBLE ONLY TO CEO & MD / ADMIN)      */}
-        {/* ========================================================================= */}
-        {activeTab === 'staff' && isExecutive && (
+        {false && (
           <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs p-6 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3">

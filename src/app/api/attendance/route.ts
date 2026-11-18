@@ -437,6 +437,144 @@ export async function GET(req: Request) {
           recordsByDate: uStats.attendanceByDate,
         };
       });
+
+      // 4. Historical / Selected Date Attendance Breakdown (Date-wise archive for CEO & MD)
+      const selectedDateParam = searchParams.get('date');
+      let targetDateStr = selectedDateParam;
+
+      if (!targetDateStr || !/^\d{4}-\d{2}-\d{2}$/.test(targetDateStr)) {
+        targetDateStr = `${istYear}-${String(istMonth).padStart(2, '0')}-${String(istDay).padStart(2, '0')}`;
+      }
+
+      const [targetY, targetM, targetD] = targetDateStr.split('-').map(Number);
+      const targetDateObj = new Date(targetY, targetM - 1, targetD);
+      const targetDayStartUTC = new Date(Date.UTC(targetY, targetM - 1, targetD, 0, 0, 0, 0) - 3600000 * 5.5);
+      const targetDayEndUTC = new Date(Date.UTC(targetY, targetM - 1, targetD, 23, 59, 59, 999) - 3600000 * 5.5);
+
+      // Fetch all attendance records specifically for target date
+      const dateAllAttendances = await prisma.attendance.findMany({
+        where: {
+          OR: [
+            {
+              punchIn: {
+                gte: targetDayStartUTC,
+                lte: targetDayEndUTC,
+              },
+            },
+            {
+              date: {
+                gte: targetDayStartUTC,
+                lte: targetDayEndUTC,
+              },
+            },
+          ],
+        },
+        orderBy: { punchIn: 'asc' },
+      });
+
+      const dateStaffMap = new Map<string, any>();
+      dateAllAttendances.forEach((att) => {
+        if (!dateStaffMap.has(att.userId)) {
+          dateStaffMap.set(att.userId, att);
+        }
+      });
+
+      const isTargetSunday = targetDateObj.getDay() === 0;
+      const isTargetBeforeStart = targetDateObj < officialTrackingStartDate;
+      const isTargetToday =
+        targetDateStr === `${istYear}-${String(istMonth).padStart(2, '0')}-${String(istDay).padStart(2, '0')}`;
+      const isTargetFuture = targetDateObj > new Date(istYear, istMonth - 1, istDay);
+
+      let dateTotalPresent = 0;
+      let dateTotalLate = 0;
+      let dateTotalHalfDay = 0;
+      let dateTotalLeave = 0;
+      let dateTotalAbsent = 0;
+      let dateTotalHours = 0;
+
+      const dateRecords = allUsers.map((u) => {
+        const uShift = getShiftConfigForRole(u.role);
+        const rec = dateStaffMap.get(u.id);
+
+        let status = rec ? rec.status : 'NOT_MARKED';
+
+        if (rec) {
+          if (rec.status === 'PRESENT') dateTotalPresent++;
+          else if (rec.status === 'LATE') {
+            dateTotalPresent++;
+            dateTotalLate++;
+          } else if (rec.status === 'HALF_DAY') dateTotalHalfDay++;
+          else if (rec.status === 'LEAVE') dateTotalLeave++;
+
+          if (rec.workingHours) {
+            dateTotalHours += Number(rec.workingHours);
+          }
+        } else {
+          // No record exists
+          if (isTargetSunday) {
+            status = 'WEEKEND';
+          } else if (isTargetBeforeStart) {
+            status = 'PRE_LAUNCH';
+          } else if (isTargetFuture) {
+            status = 'UPCOMING';
+          } else if (isTargetToday) {
+            const userShiftEnded =
+              istCurrentHour > uShift.endHour ||
+              (istCurrentHour === uShift.endHour && istCurrentMinute >= uShift.endMinute);
+            if (userShiftEnded) {
+              status = 'ABSENT';
+              dateTotalAbsent++;
+            } else {
+              status = 'NOT_MARKED';
+            }
+          } else {
+            // Past working day with no record = ABSENT
+            status = 'ABSENT';
+            dateTotalAbsent++;
+          }
+        }
+
+        return {
+          userId: u.id,
+          name: u.name,
+          username: u.username,
+          role: u.role,
+          designation: u.designation,
+          shiftTiming: `${uShift.shiftStart} – ${uShift.shiftEnd}`,
+          status,
+          punchIn: rec?.punchIn || null,
+          punchOut: rec?.punchOut || null,
+          workingHours: rec?.workingHours ? Number(rec.workingHours) : null,
+          plannedTasks: rec?.plannedTasks || null,
+          workDone: rec?.workDone || null,
+          workLocation: rec?.workLocation || null,
+          notes: rec?.notes || null,
+          id: rec?.id || null,
+        };
+      });
+
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const monthNamesShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const formattedDate = `${dayNames[targetDateObj.getDay()]}, ${targetD} ${monthNamesShort[targetM - 1]} ${targetY}`;
+
+      var dateAttendance: any = {
+        dateStr: targetDateStr,
+        formattedDate,
+        isSunday: isTargetSunday,
+        isBeforeLaunch: isTargetBeforeStart,
+        isToday: isTargetToday,
+        isFuture: isTargetFuture,
+        stats: {
+          totalStaff: allUsers.length,
+          totalPresent: dateTotalPresent,
+          totalLate: dateTotalLate,
+          totalHalfDay: dateTotalHalfDay,
+          totalLeave: dateTotalLeave,
+          totalAbsent: dateTotalAbsent,
+          totalHours: Number(dateTotalHours.toFixed(1)),
+        },
+        records: dateRecords,
+      };
     }
 
     return NextResponse.json({
@@ -462,6 +600,7 @@ export async function GET(req: Request) {
       },
       history: userPeriodRecords,
       staffAttendance: isExecutive ? staffAttendance : null,
+      dateAttendance: isExecutive ? dateAttendance : null,
       isExecutive,
     });
   } catch (error: any) {

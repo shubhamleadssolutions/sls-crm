@@ -34,6 +34,7 @@ import {
   Video,
   MessagesSquare,
   Clock,
+  UserCheck,
 } from 'lucide-react';
 
 interface User {
@@ -118,7 +119,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     {
       title: 'Collaboration & Outreach',
       items: [
-        { label: 'Attendance', href: '/attendance', icon: Clock },
+        { label: 'My Attendance', href: '/attendance', icon: Clock },
+        ...(isExecutive ? [{ label: 'Staff Attendance', href: '/attendance/staff', icon: UserCheck }] : []),
         { label: 'Team Chat', href: '/chat', icon: MessagesSquare },
         { label: 'Ad Campaigns', href: '/campaigns', icon: Megaphone },
         { label: 'Student Leads', href: '/student-leads', icon: GraduationCap },
@@ -326,8 +328,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   ? 'Dashboard'
                   : pathname.startsWith('/prospects')
                   ? 'Prospects & Sales Pipeline'
+                  : pathname === '/attendance/staff'
+                  ? 'Staff Attendance (Executive Oversight)'
                   : pathname.startsWith('/attendance')
-                  ? 'Attendance & Workforce'
+                  ? 'My Attendance & Productivity'
                   : pathname.startsWith('/profile')
                   ? 'My Executive Profile'
                   : pathname.startsWith('/follow-ups')

@@ -78,6 +78,13 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // 4. Staff Attendance: CEO and MD (ADMIN) only
+  if (pathname.startsWith('/attendance/staff')) {
+    if (role && role !== 'ADMIN' && role !== 'CEO') {
+      return NextResponse.redirect(new URL('/attendance', request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
