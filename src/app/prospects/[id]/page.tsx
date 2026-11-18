@@ -30,6 +30,7 @@ import {
   UserCheck,
   ShieldCheck,
 } from 'lucide-react';
+import EditProspectModal from '@/components/EditProspectModal';
 import { formatDate, formatDateTime, STATUS_LABELS, LEAD_SOURCE_LABELS, CHANNEL_LABELS } from '@/lib/utils';
 
 export default function ProspectDetailPage({ params }: { params: { id: string } }) {
@@ -48,6 +49,7 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [showReassignModal, setShowReassignModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAssigneeId, setSelectedAssigneeId] = useState('');
   const [reassigning, setReassigning] = useState(false);
   const [pendingStatusConfirm, setPendingStatusConfirm] = useState<string | null>(null);
@@ -365,6 +367,16 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
             {/* Quick Actions (Section 23 of PDF) */}
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <button
+                type="button"
+                onClick={() => setShowEditModal(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs active:scale-[0.99] cursor-pointer"
+                title="Edit Company, Contact, and Pipeline Details"
+              >
+                <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span>Edit Details</span>
+              </button>
+
+              <button
                 onClick={() => setShowWhatsAppModal(true)}
                 className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs active:scale-[0.99] cursor-pointer"
               >
@@ -417,7 +429,17 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
             <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Contact Details</h3>
-                <User className="w-4 h-4 text-slate-400" />
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(true)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition cursor-pointer"
+                    title="Edit Contact Details"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                  </button>
+                  <User className="w-4 h-4 text-slate-400" />
+                </div>
               </div>
 
               <div className="space-y-3 text-xs">
@@ -485,7 +507,17 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
             <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Business Details</h3>
-                <Building2 className="w-4 h-4 text-slate-400" />
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(true)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition cursor-pointer"
+                    title="Edit Business Details"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                  </button>
+                  <Building2 className="w-4 h-4 text-slate-400" />
+                </div>
               </div>
 
               <div className="space-y-3 text-xs">
@@ -1195,6 +1227,19 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
             </div>
           </div>
         )}
+
+        {/* Edit Prospect Details Modal */}
+        <EditProspectModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          prospect={prospect}
+          onSuccess={(updated) => {
+            setProspect((prev: any) => ({ ...prev, ...updated }));
+            fetchProspect();
+          }}
+          isExecutive={isExecutive}
+          usersList={users}
+        />
       </div>
     </AppLayout>
   );

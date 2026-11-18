@@ -208,6 +208,29 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       });
     }
 
+    // If general details were edited (without changing status or assignment)
+    if (!statusChanged && !assignmentChanged) {
+      await prisma.activity.create({
+        data: {
+          prospectId: updated.id,
+          channel: 'OTHER',
+          activity: 'Prospect profile & contact details updated',
+          result: `Updated by ${user.name}`,
+          userId: user.id,
+        },
+      });
+
+      await prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'PROSPECT_UPDATED',
+          entityType: 'Prospect',
+          entityId: updated.id,
+          details: `${user.name} updated details for prospect "${updated.companyName}"`,
+        },
+      });
+    }
+
     return NextResponse.json({ success: true, prospect: updated });
   } catch (error: any) {
     console.error('Error updating prospect:', error);

@@ -23,7 +23,9 @@ import {
   FileSpreadsheet,
   UserCheck,
   ShieldCheck,
+  Edit,
 } from 'lucide-react';
+import EditProspectModal from '@/components/EditProspectModal';
 import { formatDate, STATUS_LABELS, LEAD_SOURCE_LABELS } from '@/lib/utils';
 
 function ProspectsContent() {
@@ -38,6 +40,9 @@ function ProspectsContent() {
   const [selectedSource, setSelectedSource] = useState('ALL');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedAssignee, setSelectedAssignee] = useState('ALL');
+
+  // Edit Prospect Modal state
+  const [editingProspect, setEditingProspect] = useState<any | null>(null);
 
   // Quick Reassign Modal (CEO & MD Only)
   const [reassignProspect, setReassignProspect] = useState<any | null>(null);
@@ -439,12 +444,23 @@ function ProspectsContent() {
                         )}
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        <Link
-                          href={`/prospects/${p.id}`}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition"
-                        >
-                          Manage &rarr;
-                        </Link>
+                        <div className="inline-flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setEditingProspect(p)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-bold transition border border-purple-200 cursor-pointer"
+                            title="Edit Prospect Details"
+                          >
+                            <Edit className="w-3 h-3" />
+                            <span>Edit</span>
+                          </button>
+                          <Link
+                            href={`/prospects/${p.id}`}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition"
+                          >
+                            Manage &rarr;
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -531,6 +547,21 @@ function ProspectsContent() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Prospect Details Modal */}
+      {editingProspect && (
+        <EditProspectModal
+          isOpen={!!editingProspect}
+          onClose={() => setEditingProspect(null)}
+          prospect={editingProspect}
+          onSuccess={() => {
+            fetchProspects();
+            setEditingProspect(null);
+          }}
+          isExecutive={isExecutive}
+          usersList={users}
+        />
       )}
     </div>
   );
