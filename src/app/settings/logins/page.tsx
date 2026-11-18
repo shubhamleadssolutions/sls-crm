@@ -464,7 +464,9 @@ export default function LoginActivityPage() {
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] font-bold text-slate-400 uppercase">Assigned Role</span>
-                    <p className="text-xs font-bold text-slate-800 mt-0.5">{selectedRecord.role}</p>
+                    <p className="text-xs font-bold text-slate-800 mt-0.5">
+                      {ROLE_DISPLAY[selectedRecord.role]?.label || selectedRecord.role}
+                    </p>
                   </div>
                 </div>
 

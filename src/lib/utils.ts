@@ -81,33 +81,33 @@ export function formatUserRole(
   if (typeof roleOrUser === 'object') {
     const { role, designation, username, name } = roleOrUser;
     if (username?.toLowerCase() === 'abhinav' || name?.toLowerCase().includes('abhinav')) {
-      return 'Managing Director (MD)';
-    }
-    if (designation && (designation.toLowerCase().includes('md') || designation.toLowerCase().includes('managing director'))) {
-      return 'Managing Director (MD)';
+      return 'MD';
     }
     if (role === 'ADMIN') {
-      return 'Managing Director (MD)';
+      return 'MD';
     }
     if (role === 'CEO') {
-      return 'Chief Executive Officer (CEO)';
+      return 'CEO';
+    }
+    if (designation && (designation.toLowerCase().includes('md') || designation.toLowerCase().includes('managing director'))) {
+      return 'MD';
     }
     if (designation) return designation;
     if (role === 'IT_ADMIN') return 'IT Manager';
     if (role === 'ACCOUNT_MANAGER') return 'Account Manager';
     if (role === 'BD_INTERN') return 'BD Intern';
     if (role === 'SALES') return 'Sales Executive';
-    if (role === 'MARKETING') return 'Marketing Specialist';
+    if (role === 'MARKETING') return 'Marketing';
     return role || 'Team Member';
   }
 
   const role = roleOrUser.toUpperCase();
-  if (role === 'ADMIN') return 'Managing Director (MD)';
-  if (role === 'CEO') return 'Chief Executive Officer (CEO)';
+  if (role === 'ADMIN') return 'MD';
+  if (role === 'CEO') return 'CEO';
   if (role === 'IT_ADMIN') return 'IT Manager';
   if (role === 'ACCOUNT_MANAGER') return 'Account Manager';
   if (role === 'BD_INTERN') return 'BD Intern';
   if (role === 'SALES') return 'Sales Executive';
-  if (role === 'MARKETING') return 'Marketing Specialist';
+  if (role === 'MARKETING') return 'Marketing';
   return roleOrUser;
 }

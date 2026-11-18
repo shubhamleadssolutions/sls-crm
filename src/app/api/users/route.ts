@@ -96,7 +96,7 @@ export async function POST(req: Request) {
         email: cleanEmail,
         passwordHash,
         role: role || 'BD_INTERN',
-        designation: designation?.trim() || (role === 'ADMIN' ? 'Administrator' : 'Team Member'),
+        designation: designation?.trim() || (role === 'ADMIN' ? 'Managing Director (MD)' : role === 'CEO' ? 'CEO' : 'Team Member'),
         phone: phone?.trim() || null,
         isActive: true,
       },

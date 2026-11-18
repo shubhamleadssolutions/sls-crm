@@ -17,7 +17,7 @@ import {
   ArrowLeft,
   AlertTriangle,
 } from 'lucide-react';
-import { STATUS_LABELS, LEAD_SOURCE_LABELS } from '@/lib/utils';
+import { STATUS_LABELS, LEAD_SOURCE_LABELS, formatUserRole } from '@/lib/utils';
 
 export default function NewProspectPage() {
   const router = useRouter();
@@ -418,7 +418,7 @@ export default function NewProspectPage() {
                     <option value="">Default (Unassigned / Managing Director)</option>
                     {users.map((u) => (
                       <option key={u.id} value={u.id}>
-                        {u.name} ({u.role}) — {u.email}
+                        {u.name} ({formatUserRole(u)}) — {u.email}
                       </option>
                     ))}
                   </select>

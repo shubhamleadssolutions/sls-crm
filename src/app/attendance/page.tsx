@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Link from 'next/link';
+import { formatUserRole } from '@/lib/utils';
 import {
   Clock,
   CheckCircle2,
@@ -1321,7 +1322,7 @@ export default function AttendancePage() {
 
                       {/* Shift & Role */}
                       <td className="px-4 py-3.5">
-                        <span className="font-semibold text-slate-800">{member.designation || member.role}</span>
+                        <span className="font-semibold text-slate-800">{formatUserRole(member)}</span>
                         <div className="text-[10px] text-slate-400 font-mono">{member.shiftTiming}</div>
                       </td>
 
@@ -1881,7 +1882,7 @@ export default function AttendancePage() {
                   <option value="">-- Choose team member --</option>
                   {staffList.map((m) => (
                     <option key={m.userId} value={m.userId}>
-                      {m.name} (@{m.username}) — {m.designation || m.role}
+                      {m.name} (@{m.username}) — {formatUserRole(m)}
                     </option>
                   ))}
                 </select>
@@ -2036,7 +2037,7 @@ export default function AttendancePage() {
                       @{inspectStaff.username}
                     </span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
-                      {inspectStaff.designation || inspectStaff.role}
+                      {formatUserRole(inspectStaff)}
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">

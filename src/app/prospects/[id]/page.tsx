@@ -910,7 +910,7 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
                       <option value="">Keep current assignee ({prospect.assignedUser?.name || 'Unassigned'})</option>
                       {users.map((u) => (
                         <option key={u.id} value={u.id}>
-                          Assign to: {u.name} ({u.role})
+                          Assign to: {u.name} ({formatUserRole(u)})
                         </option>
                       ))}
                     </select>
@@ -1196,7 +1196,7 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
                     <option value="">Leave Unassigned</option>
                     {users.map((u) => (
                       <option key={u.id} value={u.id}>
-                        {u.name} ({u.role}) — {u.email}
+                        {u.name} ({formatUserRole(u)}) — {u.email}
                       </option>
                     ))}
                   </select>

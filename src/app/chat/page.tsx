@@ -30,7 +30,7 @@ import {
   ArrowLeft,
   ZoomIn,
 } from 'lucide-react';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, formatUserRole } from '@/lib/utils';
 
 interface ChatAttachment {
   name: string;
@@ -419,7 +419,7 @@ export default function TeamChatPage() {
                             isActive ? 'text-white/80' : 'text-slate-400'
                           }`}
                         >
-                          {member.designation || member.role}
+                          {formatUserRole(member)}
                         </span>
                       </button>
                     );
@@ -436,7 +436,7 @@ export default function TeamChatPage() {
               </div>
               <div className="truncate text-xs">
                 <p className="font-bold text-slate-900 truncate">{currentUser.name}</p>
-                <p className="text-[10px] text-blue-600 font-semibold truncate">{currentUser.designation || currentUser.role}</p>
+                <p className="text-[10px] text-blue-600 font-semibold truncate">{formatUserRole(currentUser)}</p>
               </div>
             </div>
           )}
@@ -471,7 +471,7 @@ export default function TeamChatPage() {
                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                       <span>{activeDmUser.name}</span>
                       <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-semibold border border-blue-100">
-                        {activeDmUser.designation || activeDmUser.role}
+                        {formatUserRole(activeDmUser)}
                       </span>
                     </h3>
                     <p className="text-[10px] text-slate-400">Direct message channel</p>

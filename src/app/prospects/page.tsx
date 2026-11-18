@@ -290,7 +290,7 @@ function ProspectsContent() {
                 <option value="UNASSIGNED">Unassigned Leads</option>
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>
-                    Assigned: {u.name} ({u.role})
+                    Assigned: {u.name} ({formatUserRole(u)})
                   </option>
                 ))}
               </select>
@@ -517,7 +517,7 @@ function ProspectsContent() {
                   <option value="">Leave Unassigned</option>
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.name} ({u.role}) — {u.email}
+                      {u.name} ({formatUserRole(u)}) — {u.email}
                     </option>
                   ))}
                 </select>

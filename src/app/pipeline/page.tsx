@@ -23,7 +23,7 @@ import {
   RefreshCw,
   Phone,
 } from 'lucide-react';
-import { formatDate, STATUS_LABELS, LEAD_SOURCE_LABELS } from '@/lib/utils';
+import { formatDate, STATUS_LABELS, LEAD_SOURCE_LABELS, formatUserRole } from '@/lib/utils';
 
 interface Prospect {
   id: string;
@@ -218,7 +218,7 @@ function PipelineKanbanContent() {
                 <option value="UNASSIGNED">Unassigned Leads</option>
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.name} ({u.role})
+                    {u.name} ({formatUserRole(u)})
                   </option>
                 ))}
               </select>

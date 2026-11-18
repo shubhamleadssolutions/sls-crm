@@ -33,7 +33,7 @@ import {
   CalendarDays,
   ListTodo,
 } from 'lucide-react';
-import { formatDate, formatDateTime } from '@/lib/utils';
+import { formatDate, formatDateTime, formatUserRole } from '@/lib/utils';
 
 interface DayRecord {
   id?: string;
@@ -611,7 +611,7 @@ export default function StaffAttendancePage() {
 
                         {/* Shift */}
                         <td className="px-4 py-4">
-                          <span className="font-semibold text-slate-800">{m.designation || m.role}</span>
+                          <span className="font-semibold text-slate-800">{formatUserRole(m)}</span>
                           <div className="text-[10px] text-slate-400 font-time">{m.shiftTiming}</div>
                         </td>
 
@@ -970,7 +970,7 @@ export default function StaffAttendancePage() {
 
                           {/* Shift */}
                           <td className="px-4 py-4">
-                            <span className="font-semibold text-slate-800">{rec.designation || rec.role}</span>
+                            <span className="font-semibold text-slate-800">{formatUserRole(rec)}</span>
                             <div className="text-[10px] text-slate-400 font-time">{rec.shiftTiming}</div>
                           </td>
 
@@ -1051,7 +1051,7 @@ export default function StaffAttendancePage() {
                   <div>
                     <h3 className="text-base font-bold text-slate-900">{inspectRecord.name}</h3>
                     <p className="text-xs text-slate-500 font-mono">
-                      @{inspectRecord.username} &bull; {inspectRecord.designation || inspectRecord.role}
+                      @{inspectRecord.username} &bull; {formatUserRole(inspectRecord)}
                     </p>
                   </div>
                 </div>
@@ -1181,7 +1181,7 @@ export default function StaffAttendancePage() {
                     <option value="">-- Choose Staff Member --</option>
                     {todayStaff.map((s) => (
                       <option key={s.userId} value={s.userId}>
-                        {s.name} (@{s.username}) &bull; {s.designation || s.role}
+                        {s.name} (@{s.username}) &bull; {formatUserRole(s)}
                       </option>
                     ))}
                   </select>

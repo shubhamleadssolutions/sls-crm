@@ -17,7 +17,7 @@ import {
   X,
   ShieldCheck,
 } from 'lucide-react';
-import { formatDate, STATUS_LABELS } from '@/lib/utils';
+import { formatDate, STATUS_LABELS, formatUserRole } from '@/lib/utils';
 
 function FollowUpsContent() {
   const searchParams = useSearchParams();
@@ -172,7 +172,7 @@ function FollowUpsContent() {
                 <option value="UNASSIGNED">Unassigned Leads</option>
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.name} ({u.designation || u.role})
+                    {u.name} ({formatUserRole(u)})
                   </option>
                 ))}
               </select>
@@ -368,7 +368,7 @@ function FollowUpsContent() {
                   <option value="UNASSIGNED">Unassigned</option>
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.name} (@{u.username}) — {u.designation || u.role}
+                      {u.name} (@{u.username}) — {formatUserRole(u)}
                     </option>
                   ))}
                 </select>

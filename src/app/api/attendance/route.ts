@@ -804,9 +804,10 @@ export async function POST(req: Request) {
       const normalizedLeaveType = leaveType === 'HALF_DAY' ? 'HALF_DAY' : 'LEAVE';
       const leaveLabel = normalizedLeaveType === 'HALF_DAY' ? 'Half Day Leave' : 'Approved Leave';
 
+      const execRoleTag = sessionUser.role === 'ADMIN' ? 'MD' : sessionUser.role;
       const leaveNote = reason?.trim()
-        ? `[${leaveLabel} by ${sessionUser.name} (${sessionUser.role})] ${reason.trim()}`
-        : `[${leaveLabel} by ${sessionUser.name} (${sessionUser.role})]`;
+        ? `[${leaveLabel} by ${sessionUser.name} (${execRoleTag})] ${reason.trim()}`
+        : `[${leaveLabel} by ${sessionUser.name} (${execRoleTag})]`;
 
       for (const d of datesToMark) {
         const { startUTC: dStart, endUTC: dEnd } = getISTDayBounds(d);

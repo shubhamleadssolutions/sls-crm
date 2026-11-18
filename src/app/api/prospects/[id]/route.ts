@@ -164,12 +164,13 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         ? `${assignedTarget.name} (${assignedTarget.designation || assignedTarget.role})`
         : 'Unassigned';
 
+      const userRoleTag = user.role === 'ADMIN' ? 'MD' : user.role;
       await prisma.activity.create({
         data: {
           prospectId: updated.id,
           channel: 'OTHER',
           activity: `Prospect assigned to ${targetLabel}`,
-          result: `Assigned by ${user.name} (${user.role})`,
+          result: `Assigned by ${user.name} (${userRoleTag})`,
           userId: user.id,
         },
       });
@@ -180,7 +181,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
           action: 'PROSPECT_REASSIGNED',
           entityType: 'Prospect',
           entityId: updated.id,
-          details: `${user.name} (${user.role}) reassigned prospect "${updated.companyName}" to ${targetLabel}`,
+          details: `${user.name} (${userRoleTag}) reassigned prospect "${updated.companyName}" to ${targetLabel}`,
         },
       });
     }
