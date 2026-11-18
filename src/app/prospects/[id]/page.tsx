@@ -31,7 +31,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import EditProspectModal from '@/components/EditProspectModal';
-import { formatDate, formatDateTime, STATUS_LABELS, LEAD_SOURCE_LABELS, CHANNEL_LABELS } from '@/lib/utils';
+import { formatDate, formatDateTime, STATUS_LABELS, LEAD_SOURCE_LABELS, CHANNEL_LABELS, formatUserRole } from '@/lib/utils';
 
 export default function ProspectDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -331,8 +331,8 @@ export default function ProspectDetailPage({ params }: { params: { id: string } 
                   <strong className="text-slate-800 font-bold">
                     {prospect.assignedUser?.name || <span className="text-amber-600 font-normal italic">Unassigned</span>}
                   </strong>
-                  {prospect.assignedUser?.role && (
-                    <span className="text-[10px] text-slate-400 font-medium">({prospect.assignedUser.role})</span>
+                  {prospect.assignedUser && (
+                    <span className="text-[10px] text-slate-400 font-medium">({formatUserRole(prospect.assignedUser)})</span>
                   )}
                   {isExecutive && (
                     <button

@@ -18,7 +18,7 @@ import {
   AlertCircle,
   Linkedin,
 } from 'lucide-react';
-import { STATUS_LABELS, LEAD_SOURCE_LABELS } from '@/lib/utils';
+import { STATUS_LABELS, LEAD_SOURCE_LABELS, formatUserRole } from '@/lib/utils';
 
 interface EditProspectModalProps {
   isOpen: boolean;
@@ -622,7 +622,7 @@ export default function EditProspectModal({
                         <option value="">-- Unassigned (Available in Pool) --</option>
                         {usersList.map((u) => (
                           <option key={u.id} value={u.id}>
-                            {u.name} (@{u.username}) — {u.designation || u.role}
+                            {u.name} (@{u.username}) — {formatUserRole(u)}
                           </option>
                         ))}
                       </select>
@@ -632,7 +632,7 @@ export default function EditProspectModal({
                         disabled
                         value={
                           prospect.assignedUser
-                            ? `${prospect.assignedUser.name} (${prospect.assignedUser.role})`
+                            ? `${prospect.assignedUser.name} (${formatUserRole(prospect.assignedUser)})`
                             : 'Unassigned'
                         }
                         className="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-medium text-slate-500 cursor-not-allowed"

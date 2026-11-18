@@ -36,6 +36,7 @@ import {
   Clock,
   UserCheck,
 } from 'lucide-react';
+import { formatUserRole } from '@/lib/utils';
 
 interface User {
   id: string;
@@ -50,8 +51,32 @@ interface User {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  // Instant hydration from local session storage to eliminate white-screen flashing and make navigation instant (0ms)
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = sessionStorage.getItem('sls_user');
+        return cached ? JSON.parse(cached) : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = sessionStorage.getItem('sls_user');
+        return !cached;
+      } catch {
+        return true;
+      }
+    }
+    return true;
+  });
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -59,23 +84,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let isMounted = true;
     fetch('/api/auth/me')
       .then((res) => {
         if (!res.ok) {
+          if (typeof window !== 'undefined') sessionStorage.removeItem('sls_user');
           router.push('/login');
           return null;
         }
         return res.json();
       })
       .then((data) => {
+        if (!isMounted) return;
         if (data?.user) {
           setUser(data.user);
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('sls_user', JSON.stringify(data.user));
+          }
         }
         setLoading(false);
       })
       .catch(() => {
-        router.push('/login');
+        if (isMounted) {
+          if (typeof window !== 'undefined') sessionStorage.removeItem('sls_user');
+          router.push('/login');
+        }
       });
+
+    return () => {
+      isMounted = false;
+    };
   }, [router]);
 
   // Click outside listener for profile dropdown
@@ -91,6 +129,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     try {
+      if (typeof window !== 'undefined') sessionStorage.removeItem('sls_user');
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (e) {
       console.error(e);
@@ -377,7 +416,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     {user.name}
                   </p>
                   <p className="text-[10px] text-blue-600 font-semibold truncate leading-tight">
-                    {user.role}
+                    {formatUserRole(user)}
                   </p>
                 </div>
                 <ChevronDown
@@ -400,7 +439,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         <p className="text-xs font-black text-slate-900 truncate">{user.name}</p>
                         <p className="text-[11px] text-slate-500 font-mono truncate">@{user.username}</p>
                         <span className="inline-block text-[9px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded-md mt-1">
-                          {user.designation || user.role}
+                          {formatUserRole(user)}
                         </span>
                       </div>
                     </div>
@@ -497,7 +536,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <p className="text-[11px] text-slate-500 font-mono truncate">@{user.username}</p>
                   <div className="flex items-center gap-1.5 mt-1">
                     <span className="text-[9px] font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                      {user.role}
+                      {formatUserRole(user)}
                     </span>
                     <Link
                       href="/profile"

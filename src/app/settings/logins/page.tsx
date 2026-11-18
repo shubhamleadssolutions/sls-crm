@@ -60,7 +60,7 @@ interface StatsSummary {
 }
 
 const ROLE_DISPLAY: Record<string, { label: string; badge: string }> = {
-  ADMIN: { label: 'Managing Director', badge: 'bg-purple-100 text-purple-700 border-purple-200' },
+  ADMIN: { label: 'Managing Director (MD)', badge: 'bg-purple-100 text-purple-700 border-purple-200' },
   CEO: { label: 'CEO', badge: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
   IT_ADMIN: { label: 'IT Manager', badge: 'bg-blue-100 text-blue-700 border-blue-200' },
   ACCOUNT_MANAGER: { label: 'Account Manager', badge: 'bg-teal-100 text-teal-700 border-teal-200' },

@@ -26,7 +26,7 @@ import {
   Edit,
 } from 'lucide-react';
 import EditProspectModal from '@/components/EditProspectModal';
-import { formatDate, STATUS_LABELS, LEAD_SOURCE_LABELS } from '@/lib/utils';
+import { formatDate, STATUS_LABELS, LEAD_SOURCE_LABELS, formatUserRole } from '@/lib/utils';
 
 function ProspectsContent() {
   const [prospects, setProspects] = useState<any[]>([]);
@@ -429,8 +429,8 @@ function ProspectsContent() {
                             </button>
                           )}
                         </div>
-                        {p.assignedUser?.role && (
-                          <span className="text-[10px] text-slate-400 block">{p.assignedUser.role}</span>
+                        {p.assignedUser && (
+                          <span className="text-[10px] text-slate-400 block">{formatUserRole(p.assignedUser)}</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4">

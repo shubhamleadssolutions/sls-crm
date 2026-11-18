@@ -67,3 +67,47 @@ export const CHANNEL_LABELS: Record<string, string> = {
   MEETING: "Meeting",
   OTHER: "Other",
 };
+
+/**
+ * Universal Role Formatter:
+ * Correctly displays executive titles (Abhinav Srivastava = Managing Director / MD, Shubham = CEO)
+ * instead of raw system role codes like 'ADMIN'.
+ */
+export function formatUserRole(
+  roleOrUser: string | { role?: string; designation?: string | null; name?: string; username?: string } | null | undefined
+): string {
+  if (!roleOrUser) return 'Team Member';
+
+  if (typeof roleOrUser === 'object') {
+    const { role, designation, username, name } = roleOrUser;
+    if (username?.toLowerCase() === 'abhinav' || name?.toLowerCase().includes('abhinav')) {
+      return 'Managing Director (MD)';
+    }
+    if (designation && (designation.toLowerCase().includes('md') || designation.toLowerCase().includes('managing director'))) {
+      return 'Managing Director (MD)';
+    }
+    if (role === 'ADMIN') {
+      return 'Managing Director (MD)';
+    }
+    if (role === 'CEO') {
+      return 'Chief Executive Officer (CEO)';
+    }
+    if (designation) return designation;
+    if (role === 'IT_ADMIN') return 'IT Manager';
+    if (role === 'ACCOUNT_MANAGER') return 'Account Manager';
+    if (role === 'BD_INTERN') return 'BD Intern';
+    if (role === 'SALES') return 'Sales Executive';
+    if (role === 'MARKETING') return 'Marketing Specialist';
+    return role || 'Team Member';
+  }
+
+  const role = roleOrUser.toUpperCase();
+  if (role === 'ADMIN') return 'Managing Director (MD)';
+  if (role === 'CEO') return 'Chief Executive Officer (CEO)';
+  if (role === 'IT_ADMIN') return 'IT Manager';
+  if (role === 'ACCOUNT_MANAGER') return 'Account Manager';
+  if (role === 'BD_INTERN') return 'BD Intern';
+  if (role === 'SALES') return 'Sales Executive';
+  if (role === 'MARKETING') return 'Marketing Specialist';
+  return roleOrUser;
+}

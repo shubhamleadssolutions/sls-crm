@@ -18,6 +18,7 @@ import {
   ArrowRight,
   TrendingUp,
 } from 'lucide-react';
+import { formatUserRole } from '@/lib/utils';
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
@@ -174,10 +175,10 @@ export default function ProfilePage() {
 
                 <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
                   <span className="font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200/80">
-                    {user.role}
+                    {formatUserRole(user)}
                   </span>
                   <span>&bull;</span>
-                  <span className="font-semibold text-slate-700">{user.designation || 'Team Member'}</span>
+                  <span className="font-semibold text-slate-700">{user.designation || 'Managing Director (MD)'}</span>
                   {user.phone && (
                     <>
                       <span>&bull;</span>

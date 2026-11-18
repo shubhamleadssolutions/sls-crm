@@ -23,9 +23,9 @@ import {
 
 const ROLE_INFO: Record<string, { label: string; badge: string; desc: string }> = {
   ADMIN: {
-    label: 'Managing Director',
+    label: 'Managing Director (MD)',
     badge: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-    desc: 'Full system access: all prospects, user management, settings, export, and delete protection.',
+    desc: 'Managing Director (MD) with executive authority across all prospects, user management, billing, reports, and workforce attendance.',
   },
   CEO: {
     label: 'Chief Executive Officer (CEO)',
@@ -506,7 +506,7 @@ export default function UserManagementPage() {
                       onChange={(e) => setForm({ ...form, role: e.target.value })}
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:ring-2 focus:ring-blue-600"
                     >
-                      <option value="ADMIN">Managing Director</option>
+                      <option value="ADMIN">Managing Director (MD)</option>
                       <option value="CEO">Chief Executive Officer (CEO)</option>
                       <option value="BD_INTERN">Business Development Intern</option>
                       <option value="SALES">Sales Executive</option>
@@ -648,7 +648,7 @@ export default function UserManagementPage() {
                       onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:ring-2 focus:ring-blue-600"
                     >
-                      <option value="ADMIN">Managing Director</option>
+                      <option value="ADMIN">Managing Director (MD)</option>
                       <option value="CEO">Chief Executive Officer (CEO)</option>
                       <option value="BD_INTERN">Business Development Intern</option>
                       <option value="SALES">Sales Executive</option>
