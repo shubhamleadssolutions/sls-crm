@@ -29,6 +29,7 @@ import {
   Check,
 } from 'lucide-react';
 import { formatDate, formatDateTime, STATUS_LABELS, formatUserRole } from '@/lib/utils';
+import { getClientCachedItem, setClientCachedItem, getCurrentUserFromSession } from '@/lib/clientCache';
 
 interface FollowUpItem {
   id: string;
@@ -112,9 +113,8 @@ function FollowUpsContent() {
   );
 
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
-  const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [users, setUsers] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(() => getCurrentUserFromSession());
+  const [users, setUsers] = useState<any[]>(() => getClientCachedItem<any[]>('users_list') || []);
   const [selectedUser, setSelectedUser] = useState<string>('ALL');
 
   // Filter Bar state
@@ -123,15 +123,16 @@ function FollowUpsContent() {
   const [statusFilter, setStatusFilter] = useState('ALL');
 
   // Data state
-  const [items, setItems] = useState<FollowUpItem[]>([]);
+  const [items, setItems] = useState<FollowUpItem[]>(() => getClientCachedItem<FollowUpItem[]>('followups_items') || []);
   const [completedItems, setCompletedItems] = useState<CompletedItem[]>([]);
-  const [metrics, setMetrics] = useState({
+  const [metrics, setMetrics] = useState(() => getClientCachedItem<any>('followups_metrics') || {
     overdue: 0,
     today: 0,
     upcoming: 0,
     completedPast7Days: 0,
     totalActive: 0,
   });
+  const [loading, setLoading] = useState<boolean>(() => !getClientCachedItem<FollowUpItem[]>('followups_items'));
 
   // Modal: Log & Complete Touchpoint
   const [activeLogItem, setActiveLogItem] = useState<FollowUpItem | null>(null);
@@ -162,7 +163,9 @@ function FollowUpsContent() {
     status = statusFilter
   ) => {
     try {
-      setLoading(true);
+      if (items.length === 0) {
+        setLoading(true);
+      }
       const params = new URLSearchParams({
         timeframe: tf,
         userId: userFilter,
@@ -174,13 +177,19 @@ function FollowUpsContent() {
       const res = await fetch(`/api/follow-ups?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.metrics) setMetrics(data.metrics);
+        if (data.metrics) {
+          setMetrics(data.metrics);
+          setClientCachedItem('followups_metrics', data.metrics);
+        }
         if (tf === 'completed') {
           setCompletedItems(data.items || []);
           setItems([]);
         } else {
           setItems(data.items || []);
           setCompletedItems([]);
+          if (tf === 'today' && userFilter === 'ALL' && !search && channel === 'ALL' && status === 'ALL') {
+            setClientCachedItem('followups_items', data.items || []);
+          }
         }
       }
     } catch (err) {
@@ -191,17 +200,16 @@ function FollowUpsContent() {
   };
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((d) => {
-        if (d.user) {
-          setCurrentUser(d.user);
-          if (d.user.role === 'ADMIN' || d.user.role === 'CEO') {
-            fetch('/api/users')
-              .then((r) => r.json())
-              .then((u) => setUsers(u.users || []))
-              .catch(console.error);
-          }
+    const cachedUsers = getClientCachedItem<any[]>('users_list');
+    if (cachedUsers && cachedUsers.length > 0) {
+      setUsers(cachedUsers);
+    }
+    fetch('/api/users')
+      .then((r) => r.json())
+      .then((u) => {
+        if (u?.users) {
+          setUsers(u.users);
+          setClientCachedItem('users_list', u.users);
         }
       })
       .catch(console.error);

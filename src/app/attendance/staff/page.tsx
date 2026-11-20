@@ -34,6 +34,7 @@ import {
   ListTodo,
 } from 'lucide-react';
 import { formatDate, formatDateTime, formatUserRole } from '@/lib/utils';
+import { getClientCachedItem, setClientCachedItem, getCurrentUserFromSession } from '@/lib/clientCache';
 
 interface DayRecord {
   id?: string;
@@ -74,15 +75,15 @@ interface DateAttendanceData {
 
 export default function StaffAttendancePage() {
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(() => getCurrentUserFromSession());
+  const [loading, setLoading] = useState<boolean>(() => !getClientCachedItem<any[]>('staff_attendance_today'));
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Active sub-section tab: 'today' = Today's Live Attendance | 'date' = Date-wise Records
   const [activeSubTab, setActiveSubTab] = useState<'today' | 'date'>('today');
 
   // Today's staff attendance list from API
-  const [todayStaff, setTodayStaff] = useState<any[]>([]);
+  const [todayStaff, setTodayStaff] = useState<any[]>(() => getClientCachedItem<any[]>('staff_attendance_today') || []);
 
   // Selected Date state for Historical / Date-wise attendance
   // Default to today's or yesterday's date in YYYY-MM-DD
@@ -142,6 +143,7 @@ export default function StaffAttendancePage() {
         const data = await res.json();
         if (data.staffAttendance) {
           setTodayStaff(data.staffAttendance);
+          setClientCachedItem('staff_attendance_today', data.staffAttendance);
         }
         if (data.dateAttendance) {
           setDateAttendance(data.dateAttendance);

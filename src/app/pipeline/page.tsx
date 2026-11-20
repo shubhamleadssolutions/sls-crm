@@ -24,6 +24,7 @@ import {
   Phone,
 } from 'lucide-react';
 import { formatDate, STATUS_LABELS, LEAD_SOURCE_LABELS, formatUserRole } from '@/lib/utils';
+import { getClientCachedItem, setClientCachedItem, getCurrentUserFromSession } from '@/lib/clientCache';
 
 interface Prospect {
   id: string;
@@ -53,10 +54,10 @@ const KANBAN_STAGES = [
 ];
 
 function PipelineKanbanContent() {
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [prospects, setProspects] = useState<Prospect[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(() => getCurrentUserFromSession());
+  const [prospects, setProspects] = useState<Prospect[]>(() => getClientCachedItem<Prospect[]>('pipeline_prospects') || []);
+  const [users, setUsers] = useState<any[]>(() => getClientCachedItem<any[]>('users_list') || []);
+  const [loading, setLoading] = useState<boolean>(() => !getClientCachedItem<Prospect[]>('pipeline_prospects'));
 
   // Drag and drop state
   const [draggedProspectId, setDraggedProspectId] = useState<string | null>(null);
@@ -70,7 +71,9 @@ function PipelineKanbanContent() {
   const isExecutive = currentUser?.role === 'ADMIN' || currentUser?.role === 'CEO';
 
   const fetchProspects = useCallback(async () => {
-    setLoading(true);
+    if (prospects.length === 0) {
+      setLoading(true);
+    }
     try {
       const params = new URLSearchParams();
       if (searchTerm) params.set('search', searchTerm);
@@ -79,25 +82,32 @@ function PipelineKanbanContent() {
 
       const res = await fetch(`/api/prospects?${params.toString()}`);
       const data = await res.json();
-      setProspects(data.prospects || []);
+      if (data?.prospects) {
+        setProspects(data.prospects);
+        if (!searchTerm && selectedSource === 'ALL' && selectedUserId === 'ALL') {
+          setClientCachedItem('pipeline_prospects', data.prospects);
+        }
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, selectedSource, selectedUserId]);
+  }, [searchTerm, selectedSource, selectedUserId, prospects.length]);
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((d) => {
-        if (d?.user) setCurrentUser(d.user);
-      })
-      .catch(console.error);
-
+    const cachedUsers = getClientCachedItem<any[]>('users_list');
+    if (cachedUsers && cachedUsers.length > 0) {
+      setUsers(cachedUsers);
+    }
     fetch('/api/users')
       .then((res) => res.json())
-      .then((d) => setUsers(d.users || []))
+      .then((d) => {
+        if (d?.users) {
+          setUsers(d.users);
+          setClientCachedItem('users_list', d.users);
+        }
+      })
       .catch(console.error);
   }, []);
 

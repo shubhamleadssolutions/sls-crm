@@ -34,35 +34,35 @@ export async function GET(req: Request) {
       ...assignedFilter,
     };
 
-    // Calculate Dashboard Counts
-    const [
-      total,
-      newCount,
-      contacted,
-      followUpDue,
-      replied,
-      interested,
-      meetings,
-      proposalsSent,
-      won,
-      lost,
-    ] = await Promise.all([
+    // Calculate Dashboard Counts via single groupBy (eliminates 10 separate roundtrips)
+    const [statusGroups, total] = await Promise.all([
+      prisma.prospect.groupBy({
+        by: ['status'],
+        where: baseWhere,
+        _count: { _all: true },
+      }),
       prisma.prospect.count({ where: baseWhere }),
-      prisma.prospect.count({ where: { ...baseWhere, status: 'NEW_PROSPECT' } }),
-      prisma.prospect.count({ where: { ...baseWhere, status: 'CONTACTED' } }),
-      prisma.prospect.count({ where: { ...baseWhere, status: 'FOLLOW_UP' } }),
-      prisma.prospect.count({ where: { ...baseWhere, status: 'REPLIED' } }),
-      prisma.prospect.count({ where: { ...baseWhere, status: 'INTERESTED' } }),
-      prisma.prospect.count({ where: { ...baseWhere, status: 'MEETING_DISCUSSION' } }),
-      prisma.prospect.count({ where: { ...baseWhere, status: 'PROPOSAL_SENT' } }),
-      prisma.prospect.count({ where: { ...baseWhere, status: 'WON' } }),
-      prisma.prospect.count({ where: { ...baseWhere, status: 'LOST' } }),
     ]);
+
+    const countsMap: Record<string, number> = {};
+    statusGroups.forEach((g) => {
+      countsMap[g.status] = g._count._all;
+    });
+
+    const newCount = countsMap['NEW_PROSPECT'] || 0;
+    const contacted = countsMap['CONTACTED'] || 0;
+    const followUpDue = countsMap['FOLLOW_UP'] || 0;
+    const replied = countsMap['REPLIED'] || 0;
+    const interested = countsMap['INTERESTED'] || 0;
+    const meetings = countsMap['MEETING_DISCUSSION'] || 0;
+    const proposalsSent = countsMap['PROPOSAL_SENT'] || 0;
+    const won = countsMap['WON'] || 0;
+    const lost = countsMap['LOST'] || 0;
 
     const todayStart = startOfDay(new Date());
     const todayEnd = endOfDay(new Date());
 
-    // Today's Follow-ups
+    // Today's Follow-ups (bounded to top 25 for fast response)
     const todaysFollowUps = await prisma.prospect.findMany({
       where: {
         ...baseWhere,
@@ -75,9 +75,10 @@ export async function GET(req: Request) {
         assignedUser: { select: { id: true, name: true, username: true, role: true, designation: true } },
       },
       orderBy: { nextFollowUpDate: 'asc' },
+      take: 25,
     });
 
-    // Overdue Follow-ups
+    // Overdue Follow-ups (bounded to top 25 for fast response)
     const overdueFollowUps = await prisma.prospect.findMany({
       where: {
         ...baseWhere,
@@ -89,9 +90,10 @@ export async function GET(req: Request) {
         assignedUser: { select: { id: true, name: true, username: true, role: true, designation: true } },
       },
       orderBy: { nextFollowUpDate: 'asc' },
+      take: 25,
     });
 
-    // Recent Activities
+    // Recent Activities (take 10)
     const recentActivities = await prisma.activity.findMany({
       where: !isExecutive
         ? { prospect: { assignedUserId: user.id } }
@@ -105,7 +107,7 @@ export async function GET(req: Request) {
     });
 
     // --------------------------------------------------------------------------
-    // Employee Performance & Closed Deals Aggregation (Who worked the most)
+    // Employee Performance & Closed Deals Aggregation (Optimized with _count)
     // --------------------------------------------------------------------------
     const allUsers = await prisma.user.findMany({
       where: { isActive: true },
@@ -119,11 +121,11 @@ export async function GET(req: Request) {
           where: { isArchived: false },
           select: { id: true, status: true },
         },
-        activities: {
-          select: { id: true },
-        },
-        meetings: {
-          select: { id: true },
+        _count: {
+          select: {
+            activities: true,
+            meetings: true,
+          },
         },
         clients: {
           select: { id: true, retainerAmount: true },
@@ -139,8 +141,8 @@ export async function GET(req: Request) {
         const wonCount = u.assignedProspects.filter((p) => p.status === 'WON').length + u.clients.length;
         const lostCount = u.assignedProspects.filter((p) => p.status === 'LOST').length;
         const activeDeals = u.assignedProspects.filter((p) => activeStages.includes(p.status)).length;
-        const activitiesCount = u.activities.length;
-        const meetingsCount = u.meetings.length;
+        const activitiesCount = u._count.activities;
+        const meetingsCount = u._count.meetings;
         const closedCount = wonCount + lostCount;
         const winRate = closedCount > 0 ? Math.round((wonCount / closedCount) * 100) : (totalAssigned > 0 ? 0 : 100);
 

@@ -27,12 +27,13 @@ import {
 } from 'lucide-react';
 import EditProspectModal from '@/components/EditProspectModal';
 import { formatDate, STATUS_LABELS, LEAD_SOURCE_LABELS, formatUserRole } from '@/lib/utils';
+import { getClientCachedItem, setClientCachedItem, getCurrentUserFromSession } from '@/lib/clientCache';
 
 function ProspectsContent() {
-  const [prospects, setProspects] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [prospects, setProspects] = useState<any[]>(() => getClientCachedItem<any[]>('prospects_list') || []);
+  const [users, setUsers] = useState<any[]>(() => getClientCachedItem<any[]>('users_list') || []);
+  const [currentUser, setCurrentUser] = useState<any>(() => getCurrentUserFromSession());
+  const [loading, setLoading] = useState<boolean>(() => !getClientCachedItem<any[]>('prospects_list'));
 
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,7 +53,10 @@ function ProspectsContent() {
   const isExecutive = currentUser?.role === 'ADMIN' || currentUser?.role === 'CEO';
 
   const fetchProspects = useCallback(async () => {
-    setLoading(true);
+    // Only show full loading spinner if we don't have cached prospects yet
+    if (prospects.length === 0) {
+      setLoading(true);
+    }
     try {
       const params = new URLSearchParams();
       if (searchTerm) params.set('search', searchTerm);
@@ -63,33 +67,45 @@ function ProspectsContent() {
 
       const res = await fetch(`/api/prospects?${params.toString()}`);
       const data = await res.json();
-      setProspects(data.prospects || []);
+      if (data?.prospects) {
+        setProspects(data.prospects);
+        // Cache default view for 0ms return navigation
+        if (!searchTerm && selectedStatus === 'ALL' && selectedSource === 'ALL' && !selectedCity && selectedAssignee === 'ALL') {
+          setClientCachedItem('prospects_list', data.prospects);
+        }
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, selectedStatus, selectedSource, selectedCity, selectedAssignee]);
+  }, [searchTerm, selectedStatus, selectedSource, selectedCity, selectedAssignee, prospects.length]);
 
   useEffect(() => {
     fetchProspects();
   }, [fetchProspects]);
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((d) => {
-        if (d.user) {
-          setCurrentUser(d.user);
-          if (d.user.role === 'ADMIN' || d.user.role === 'CEO') {
-            fetch('/api/users')
-              .then((res) => res.json())
-              .then((data) => setUsers(data.users || []))
-              .catch(console.error);
-          }
+    // Load session user and cached users
+    const sessUser = getCurrentUserFromSession();
+    if (sessUser) {
+      setCurrentUser(sessUser);
+      if (sessUser.role === 'ADMIN' || sessUser.role === 'CEO') {
+        const cachedUsers = getClientCachedItem<any[]>('users_list');
+        if (cachedUsers && cachedUsers.length > 0) {
+          setUsers(cachedUsers);
         }
-      })
-      .catch(console.error);
+        fetch('/api/users')
+          .then((res) => res.json())
+          .then((data) => {
+            if (data?.users) {
+              setUsers(data.users);
+              setClientCachedItem('users_list', data.users);
+            }
+          })
+          .catch(console.error);
+      }
+    }
   }, []);
 
   const handleExport = (format: 'csv' | 'xlsx') => {

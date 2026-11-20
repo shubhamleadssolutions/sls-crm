@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Link from 'next/link';
+import { getClientCachedItem, setClientCachedItem } from '@/lib/clientCache';
 import {
   Users,
   UserCheck,
@@ -56,8 +57,8 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<DashboardStats | null>(() => getClientCachedItem<DashboardStats>('dashboard_stats'));
+  const [loading, setLoading] = useState<boolean>(() => !getClientCachedItem<DashboardStats>('dashboard_stats'));
 
   const fetchStats = () => {
     fetch('/api/dashboard/stats')
@@ -68,6 +69,7 @@ export default function DashboardPage() {
       .then((d) => {
         if (d && d.metrics) {
           setData(d);
+          setClientCachedItem('dashboard_stats', d);
         }
         setLoading(false);
       })

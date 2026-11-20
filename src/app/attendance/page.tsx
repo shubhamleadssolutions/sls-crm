@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Link from 'next/link';
 import { formatUserRole } from '@/lib/utils';
+import { getClientCachedItem, setClientCachedItem } from '@/lib/clientCache';
 import {
   Clock,
   CheckCircle2,
@@ -84,11 +85,11 @@ const MONTH_NAMES = [
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function AttendancePage() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(() => !getClientCachedItem<any>('attendance_calendar'));
   const [submitting, setSubmitting] = useState(false);
-  const [todayRecord, setTodayRecord] = useState<any | null>(null);
+  const [todayRecord, setTodayRecord] = useState<any | null>(() => getClientCachedItem<any>('attendance_today_record'));
   const [isExecutive, setIsExecutive] = useState(false);
-  const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const [staffList, setStaffList] = useState<StaffMember[]>(() => getClientCachedItem<StaffMember[]>('attendance_staff_list') || []);
 
   // Active Tab: 'my' = My Attendance (all employees, CEO, MD); 'staff' = Staff Attendance Record (CEO & MD only)
   const [activeTab, setActiveTab] = useState<'my' | 'staff'>('my');
@@ -103,13 +104,13 @@ export default function AttendancePage() {
     year: number;
     month: number;
     attendanceByDate: Record<string, DayRecord>;
-  }>({
+  }>(() => getClientCachedItem<any>('attendance_calendar') || {
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
     attendanceByDate: {},
   });
 
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState(() => getClientCachedItem<any>('attendance_stats') || {
     totalPresent: 0,
     totalAbsent: 0,
     totalLeave: 0,
@@ -173,21 +174,28 @@ export default function AttendancePage() {
     targetMonth: number = viewDate.getMonth() + 1
   ) => {
     try {
-      setLoading(true);
+      if (!calendarData || Object.keys(calendarData.attendanceByDate || {}).length === 0) {
+        setLoading(true);
+      }
       const monthStr = `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
       const res = await fetch(`/api/attendance?timeframe=${targetTf}&month=${monthStr}&year=${targetYear}`);
       if (res.ok) {
         const data = await res.json();
         setTodayRecord(data.todayRecord || null);
         setIsExecutive(Boolean(data.isExecutive));
+        if (data.todayRecord) {
+          setClientCachedItem('attendance_today_record', data.todayRecord);
+        }
         if (data.periodLabel) {
           setPeriodLabel(data.periodLabel);
         }
         if (data.calendar) {
           setCalendarData(data.calendar);
+          setClientCachedItem('attendance_calendar', data.calendar);
         }
         if (data.stats) {
           setStats(data.stats);
+          setClientCachedItem('attendance_stats', data.stats);
         }
         if (data.shiftConfig) {
           setShiftConfig(data.shiftConfig);
@@ -197,6 +205,7 @@ export default function AttendancePage() {
         }
         if (data.staffAttendance) {
           setStaffList(data.staffAttendance);
+          setClientCachedItem('attendance_staff_list', data.staffAttendance);
         }
       }
     } catch (err) {

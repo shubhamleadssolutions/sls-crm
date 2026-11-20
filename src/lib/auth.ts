@@ -39,6 +39,17 @@ export async function verifySessionToken(token: string): Promise<TokenPayload | 
   }
 }
 
+// In-memory cache for active sessions (TTL: 60 seconds) to eliminate redundant roundtrips
+const sessionCache = new Map<string, { user: any; expiresAt: number }>();
+
+export function invalidateUserCache(userId?: string) {
+  if (userId) {
+    sessionCache.delete(userId);
+  } else {
+    sessionCache.clear();
+  }
+}
+
 export async function getSessionUser() {
   try {
     const cookieStore = cookies();
@@ -47,6 +58,12 @@ export async function getSessionUser() {
 
     const payload = await verifySessionToken(token);
     if (!payload?.userId) return null;
+
+    // Check high-speed memory cache first (0ms response)
+    const cached = sessionCache.get(payload.userId);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.user;
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
@@ -62,7 +79,17 @@ export async function getSessionUser() {
       },
     });
 
-    if (!user || !user.isActive) return null;
+    if (!user || !user.isActive) {
+      sessionCache.delete(payload.userId);
+      return null;
+    }
+
+    // Cache valid user for 60 seconds
+    sessionCache.set(payload.userId, {
+      user,
+      expiresAt: Date.now() + 60 * 1000,
+    });
+
     return user;
   } catch {
     return null;

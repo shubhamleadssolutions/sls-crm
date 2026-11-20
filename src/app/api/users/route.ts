@@ -4,11 +4,24 @@ import { getSessionUser, hashPassword } from '@/lib/auth';
 
 const CAN_MANAGE_USERS = ['ADMIN', 'CEO', 'IT_ADMIN'];
 
+let cachedUsersData: any = null;
+let cachedUsersExpires = 0;
+
+function invalidateUsersCache() {
+  cachedUsersData = null;
+  cachedUsersExpires = 0;
+}
+
 export async function GET() {
   try {
     const user = await getSessionUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // High-speed in-memory cache check (0ms)
+    if (cachedUsersData && Date.now() < cachedUsersExpires) {
+      return NextResponse.json({ users: cachedUsersData });
     }
 
     // Role check: Only CEO, MD (ADMIN), and IT Manager (IT_ADMIN) can view user management
@@ -35,6 +48,9 @@ export async function GET() {
       },
       orderBy: { createdAt: 'asc' },
     });
+
+    cachedUsersData = users;
+    cachedUsersExpires = Date.now() + 45 * 1000; // 45 seconds TTL
 
     return NextResponse.json({ users });
   } catch (error: any) {
@@ -123,6 +139,7 @@ export async function POST(req: Request) {
       },
     });
 
+    invalidateUsersCache();
     return NextResponse.json({ success: true, user: newUser });
   } catch (error: any) {
     console.error('Error creating user:', error);
