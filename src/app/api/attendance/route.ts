@@ -70,9 +70,10 @@ function getShiftConfigForRole(role: string) {
 }
 
 // ============================================================================
-// AUTOMATIC END-OF-DAY AUTO PUNCH-OUT ENGINE
-// Automatically closes any shift that was left open past the end of the day or shift hours
-// Caps duration to shift targets and prevents anomalous multi-day durations (e.g. 47 hrs)
+// AUTOMATIC CALENDAR-DAY-END AUTO PUNCH-OUT ENGINE
+// If a user punches in and does not manually punch out before 12:00 AM (midnight),
+// when that day ends, the system automatically marks them punched out at 11:59:59 PM IST
+// of that exact same date, calculating duration up to midnight (capping multi-day spillover).
 // ============================================================================
 async function autoCloseExpiredShifts(targetUserId?: string) {
   try {
@@ -106,39 +107,26 @@ async function autoCloseExpiredShifts(targetUserId?: string) {
         (recYear === istYear && recMonth < istMonth) ||
         (recYear === istYear && recMonth === istMonth && recDay < istDay);
 
-      const shiftConfig = getShiftConfigForRole(rec.user.role);
-
-      // A record must be closed if:
-      // a) It is from a previous calendar day in IST
-      // b) It is from today, but the day in IST has fully ended (past todayEnd / past 23:59:59 IST)
+      // A shift is ONLY automatically closed when the calendar day ends (i.e. midnight / 12:00 AM hits).
+      // During the day (even after scheduled shift hours like 8 PM, 9 PM, 10 PM), the user remains active and can punch out anytime.
       const isDayEnded = isPreviousDay || now.getTime() > todayEnd.getTime();
 
       if (isDayEnded) {
-        // Shift end time on that record's day in IST
-        const shiftEndUTC = new Date(
-          Date.UTC(recYear, recMonth - 1, recDay, shiftConfig.endHour, shiftConfig.endMinute, 0, 0) - 3600000 * 5.5
-        );
+        // Punch out is set strictly to the end of that day: 11:59:59 PM IST (23:59:59.999 IST)
         const endOfDayUTC = new Date(
           Date.UTC(recYear, recMonth - 1, recDay, 23, 59, 59, 999) - 3600000 * 5.5
         );
 
         const punchInUTC = new Date(punchInDate);
-
-        // Auto punch-out timestamp
-        let autoPunchOutUTC = shiftEndUTC;
-        if (punchInUTC.getTime() >= shiftEndUTC.getTime()) {
-          autoPunchOutUTC = endOfDayUTC;
-        }
-
-        if (autoPunchOutUTC.getTime() <= punchInUTC.getTime()) {
-          autoPunchOutUTC = new Date(punchInUTC.getTime() + shiftConfig.targetHours * 3600000);
-        }
+        const autoPunchOutUTC = endOfDayUTC;
 
         const diffMs = Math.max(0, autoPunchOutUTC.getTime() - punchInUTC.getTime());
         let hours = Number((diffMs / (1000 * 60 * 60)).toFixed(2));
-        hours = Math.min(hours, shiftConfig.targetHours);
+        // Safety ceiling: capped at 12 hours max for a single calendar day
+        hours = Math.min(hours, 12);
         hours = Math.max(0.1, hours);
 
+        const shiftConfig = getShiftConfigForRole(rec.user.role);
         let status = rec.status;
         if (hours < shiftConfig.halfDayThreshold && status !== 'LATE') {
           status = 'HALF_DAY';
@@ -149,10 +137,10 @@ async function autoCloseExpiredShifts(targetUserId?: string) {
           data: {
             punchOut: autoPunchOutUTC,
             workingHours: hours,
-            workDone: rec.workDone || (rec.plannedTasks ? `Tasks recorded: ${rec.plannedTasks}` : 'Auto punch-out at end of day (Shift closed automatically)'),
+            workDone: rec.workDone || (rec.plannedTasks ? `Tasks recorded: ${rec.plannedTasks}` : 'Auto-recorded shift at day end'),
             notes: rec.notes
-              ? `${rec.notes} | Auto punch-out at end of day`
-              : 'Auto punch-out at end of day (User forgot to punch out)',
+              ? `${rec.notes} | Auto punch-out at 11:59 PM IST (Day ended)`
+              : 'Auto punch-out at 11:59 PM IST (Day ended without manual punch out)',
             status,
           },
         });
@@ -171,31 +159,27 @@ async function autoCloseExpiredShifts(targetUserId?: string) {
     });
 
     for (const badRec of anomalousRecords) {
-      const shiftConfig = getShiftConfigForRole(badRec.user.role);
       const punchInDate = badRec.punchIn || badRec.date;
       const punchInIST = getISTDate(new Date(punchInDate));
       const recYear = punchInIST.getFullYear();
       const recMonth = punchInIST.getMonth() + 1;
       const recDay = punchInIST.getDate();
 
-      const shiftEndUTC = new Date(
-        Date.UTC(recYear, recMonth - 1, recDay, shiftConfig.endHour, shiftConfig.endMinute, 0, 0) - 3600000 * 5.5
+      const endOfDayUTC = new Date(
+        Date.UTC(recYear, recMonth - 1, recDay, 23, 59, 59, 999) - 3600000 * 5.5
       );
       const punchInUTC = new Date(punchInDate);
-      const autoPunchOutUTC = punchInUTC.getTime() >= shiftEndUTC.getTime()
-        ? new Date(Date.UTC(recYear, recMonth - 1, recDay, 23, 59, 59, 999) - 3600000 * 5.5)
-        : shiftEndUTC;
 
-      const diffMs = Math.max(0, autoPunchOutUTC.getTime() - punchInUTC.getTime());
+      const diffMs = Math.max(0, endOfDayUTC.getTime() - punchInUTC.getTime());
       let hours = Number((diffMs / (1000 * 60 * 60)).toFixed(2));
-      hours = Math.min(hours, shiftConfig.targetHours);
+      hours = Math.min(hours, 12);
 
       await prisma.attendance.update({
         where: { id: badRec.id },
         data: {
-          punchOut: autoPunchOutUTC,
+          punchOut: endOfDayUTC,
           workingHours: hours,
-          notes: badRec.notes ? `${badRec.notes} | Auto-corrected working hours` : 'Auto-corrected working hours to shift target',
+          notes: badRec.notes ? `${badRec.notes} | Auto-corrected to day-end (11:59 PM)` : 'Auto-corrected to day-end (11:59 PM IST)',
         },
       });
     }
