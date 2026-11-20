@@ -69,12 +69,150 @@ function getShiftConfigForRole(role: string) {
   }
 }
 
+// ============================================================================
+// AUTOMATIC END-OF-DAY AUTO PUNCH-OUT ENGINE
+// Automatically closes any shift that was left open past the end of the day or shift hours
+// Caps duration to shift targets and prevents anomalous multi-day durations (e.g. 47 hrs)
+// ============================================================================
+async function autoCloseExpiredShifts(targetUserId?: string) {
+  try {
+    const now = new Date();
+    const { startUTC: todayStart, endUTC: todayEnd, istYear, istMonth, istDay } = getISTDayBounds(now);
+
+    // 1. Find all records with punchOut === null
+    const whereClause: any = { punchOut: null };
+    if (targetUserId) {
+      whereClause.userId = targetUserId;
+    }
+
+    const openRecords = await prisma.attendance.findMany({
+      where: whereClause,
+      include: {
+        user: { select: { role: true, name: true } },
+      },
+    });
+
+    for (const rec of openRecords) {
+      const punchInDate = rec.punchIn || rec.date;
+      if (!punchInDate) continue;
+
+      const punchInIST = getISTDate(new Date(punchInDate));
+      const recYear = punchInIST.getFullYear();
+      const recMonth = punchInIST.getMonth() + 1;
+      const recDay = punchInIST.getDate();
+
+      const isPreviousDay =
+        recYear < istYear ||
+        (recYear === istYear && recMonth < istMonth) ||
+        (recYear === istYear && recMonth === istMonth && recDay < istDay);
+
+      const shiftConfig = getShiftConfigForRole(rec.user.role);
+
+      // A record must be closed if:
+      // a) It is from a previous calendar day in IST
+      // b) It is from today, but the day in IST has fully ended (past todayEnd / past 23:59:59 IST)
+      const isDayEnded = isPreviousDay || now.getTime() > todayEnd.getTime();
+
+      if (isDayEnded) {
+        // Shift end time on that record's day in IST
+        const shiftEndUTC = new Date(
+          Date.UTC(recYear, recMonth - 1, recDay, shiftConfig.endHour, shiftConfig.endMinute, 0, 0) - 3600000 * 5.5
+        );
+        const endOfDayUTC = new Date(
+          Date.UTC(recYear, recMonth - 1, recDay, 23, 59, 59, 999) - 3600000 * 5.5
+        );
+
+        const punchInUTC = new Date(punchInDate);
+
+        // Auto punch-out timestamp
+        let autoPunchOutUTC = shiftEndUTC;
+        if (punchInUTC.getTime() >= shiftEndUTC.getTime()) {
+          autoPunchOutUTC = endOfDayUTC;
+        }
+
+        if (autoPunchOutUTC.getTime() <= punchInUTC.getTime()) {
+          autoPunchOutUTC = new Date(punchInUTC.getTime() + shiftConfig.targetHours * 3600000);
+        }
+
+        const diffMs = Math.max(0, autoPunchOutUTC.getTime() - punchInUTC.getTime());
+        let hours = Number((diffMs / (1000 * 60 * 60)).toFixed(2));
+        hours = Math.min(hours, shiftConfig.targetHours);
+        hours = Math.max(0.1, hours);
+
+        let status = rec.status;
+        if (hours < shiftConfig.halfDayThreshold && status !== 'LATE') {
+          status = 'HALF_DAY';
+        }
+
+        await prisma.attendance.update({
+          where: { id: rec.id },
+          data: {
+            punchOut: autoPunchOutUTC,
+            workingHours: hours,
+            workDone: rec.workDone || (rec.plannedTasks ? `Tasks recorded: ${rec.plannedTasks}` : 'Auto punch-out at end of day (Shift closed automatically)'),
+            notes: rec.notes
+              ? `${rec.notes} | Auto punch-out at end of day`
+              : 'Auto punch-out at end of day (User forgot to punch out)',
+            status,
+          },
+        });
+      }
+    }
+
+    // 2. Safeguard: Auto-correct any anomalous historical records where workingHours > 14
+    const anomalousRecords = await prisma.attendance.findMany({
+      where: {
+        workingHours: { gt: 14 },
+        ...(targetUserId ? { userId: targetUserId } : {}),
+      },
+      include: {
+        user: { select: { role: true } },
+      },
+    });
+
+    for (const badRec of anomalousRecords) {
+      const shiftConfig = getShiftConfigForRole(badRec.user.role);
+      const punchInDate = badRec.punchIn || badRec.date;
+      const punchInIST = getISTDate(new Date(punchInDate));
+      const recYear = punchInIST.getFullYear();
+      const recMonth = punchInIST.getMonth() + 1;
+      const recDay = punchInIST.getDate();
+
+      const shiftEndUTC = new Date(
+        Date.UTC(recYear, recMonth - 1, recDay, shiftConfig.endHour, shiftConfig.endMinute, 0, 0) - 3600000 * 5.5
+      );
+      const punchInUTC = new Date(punchInDate);
+      const autoPunchOutUTC = punchInUTC.getTime() >= shiftEndUTC.getTime()
+        ? new Date(Date.UTC(recYear, recMonth - 1, recDay, 23, 59, 59, 999) - 3600000 * 5.5)
+        : shiftEndUTC;
+
+      const diffMs = Math.max(0, autoPunchOutUTC.getTime() - punchInUTC.getTime());
+      let hours = Number((diffMs / (1000 * 60 * 60)).toFixed(2));
+      hours = Math.min(hours, shiftConfig.targetHours);
+
+      await prisma.attendance.update({
+        where: { id: badRec.id },
+        data: {
+          punchOut: autoPunchOutUTC,
+          workingHours: hours,
+          notes: badRec.notes ? `${badRec.notes} | Auto-corrected working hours` : 'Auto-corrected working hours to shift target',
+        },
+      });
+    }
+  } catch (err) {
+    console.error('Error in autoCloseExpiredShifts:', err);
+  }
+}
+
 export async function GET(req: Request) {
   try {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Run Automatic End-of-Day Auto Punch-Out check for all users
+    await autoCloseExpiredShifts();
 
     const { searchParams } = new URL(req.url);
     const now = new Date();
@@ -141,37 +279,27 @@ export async function GET(req: Request) {
       periodLabel = `All Time (Since Nov 16, 2026)`;
     }
 
-    // 1. Fetch Today's Shift for Current User (active open shift first)
-    let todayRecord = await prisma.attendance.findFirst({
+    // 1. Fetch Today's Shift for Current User (Strictly for Today's Date bounds in IST)
+    const todayRecord = await prisma.attendance.findFirst({
       where: {
         userId: sessionUser.id,
-        punchOut: null,
+        OR: [
+          {
+            date: {
+              gte: todayStart,
+              lte: todayEnd,
+            },
+          },
+          {
+            punchIn: {
+              gte: todayStart,
+              lte: todayEnd,
+            },
+          },
+        ],
       },
       orderBy: { punchIn: 'desc' },
     });
-
-    if (!todayRecord) {
-      todayRecord = await prisma.attendance.findFirst({
-        where: {
-          userId: sessionUser.id,
-          OR: [
-            {
-              date: {
-                gte: todayStart,
-                lte: todayEnd,
-              },
-            },
-            {
-              punchIn: {
-                gte: todayStart,
-                lte: todayEnd,
-              },
-            },
-          ],
-        },
-        orderBy: { punchIn: 'desc' },
-      });
-    }
 
     // 2. Fetch User's Attendance Records for the Selected Period
     const userPeriodRecords = await prisma.attendance.findMany({
@@ -360,11 +488,10 @@ export async function GET(req: Request) {
         userRecordsMap.get(att.userId)!.push(att);
       });
 
-      // Fetch Today's Attendance for all users to determine today's live status
+      // Fetch Today's Attendance for all users to determine today's live status (Strictly for Today)
       const todayAllAttendances = await prisma.attendance.findMany({
         where: {
           OR: [
-            { punchOut: null },
             {
               punchIn: {
                 gte: todayStart,
@@ -627,16 +754,41 @@ export async function POST(req: Request) {
     // ACTION: PUNCH_IN
     // ==========================================
     if (action === 'PUNCH_IN') {
+      // First, auto-close any stale/expired shifts from prior days
+      await autoCloseExpiredShifts(sessionUser.id);
+
       const activeShift = await prisma.attendance.findFirst({
         where: {
           userId: sessionUser.id,
           punchOut: null,
+          punchIn: {
+            gte: todayStart,
+            lte: todayEnd,
+          },
         },
       });
 
       if (activeShift) {
         return NextResponse.json(
-          { error: 'You already have an active shift in progress. Please punch out first before starting a new shift.' },
+          { error: 'You already have an active shift in progress for today. Please punch out first before starting a new shift.' },
+          { status: 400 }
+        );
+      }
+
+      const completedToday = await prisma.attendance.findFirst({
+        where: {
+          userId: sessionUser.id,
+          punchOut: { not: null },
+          punchIn: {
+            gte: todayStart,
+            lte: todayEnd,
+          },
+        },
+      });
+
+      if (completedToday) {
+        return NextResponse.json(
+          { error: 'You have already completed your shift for today.' },
           { status: 400 }
         );
       }
@@ -682,16 +834,23 @@ export async function POST(req: Request) {
     // ACTION: PUNCH_OUT
     // ==========================================
     if (action === 'PUNCH_OUT') {
-      let activeRecord = await prisma.attendance.findFirst({
+      // First, auto-close any stale/expired shifts from prior days
+      await autoCloseExpiredShifts(sessionUser.id);
+
+      const activeRecord = await prisma.attendance.findFirst({
         where: {
           userId: sessionUser.id,
           punchOut: null,
+          punchIn: {
+            gte: todayStart,
+            lte: todayEnd,
+          },
         },
         orderBy: { punchIn: 'desc' },
       });
 
       if (!activeRecord) {
-        activeRecord = await prisma.attendance.findFirst({
+        const completedToday = await prisma.attendance.findFirst({
           where: {
             userId: sessionUser.id,
             punchIn: {
@@ -702,19 +861,17 @@ export async function POST(req: Request) {
           orderBy: { punchIn: 'desc' },
         });
 
-        if (!activeRecord) {
+        if (completedToday && completedToday.punchOut) {
           return NextResponse.json(
-            { error: 'No active punch-in record found. Please punch in first.' },
+            { error: 'You have already punched out of today\'s shift.' },
             { status: 400 }
           );
         }
 
-        if (activeRecord.punchOut) {
-          return NextResponse.json(
-            { error: 'You have already punched out of this shift.' },
-            { status: 400 }
-          );
-        }
+        return NextResponse.json(
+          { error: 'No active punch-in record found for today. Please punch in first.' },
+          { status: 400 }
+        );
       }
 
       if (!workDone || !workDone.trim() || workDone.trim().length < 5) {
@@ -727,7 +884,10 @@ export async function POST(req: Request) {
       const punchInMs = new Date(activeRecord.punchIn).getTime();
       const punchOutMs = now.getTime();
       const diffMs = Math.max(0, punchOutMs - punchInMs);
-      const hours = Math.max(0.01, Number((diffMs / (1000 * 60 * 60)).toFixed(2)));
+      let hours = Math.max(0.01, Number((diffMs / (1000 * 60 * 60)).toFixed(2)));
+
+      // Hard ceiling safeguard: Single shift cannot exceed 12 hours
+      hours = Math.min(hours, 12);
 
       let status = activeRecord.status;
       if (hours < shiftConfig.halfDayThreshold && status !== 'LATE') {

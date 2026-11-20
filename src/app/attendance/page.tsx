@@ -363,9 +363,13 @@ export default function AttendancePage() {
     const now = currentTime.getTime();
     const diff = Math.max(0, now - start);
 
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    // Hard ceiling: Live shift display cannot exceed 12 hours
+    const maxShiftMs = 12 * 60 * 60 * 1000;
+    const cappedDiff = Math.min(diff, maxShiftMs);
+
+    const hours = Math.floor(cappedDiff / (1000 * 60 * 60));
+    const minutes = Math.floor((cappedDiff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((cappedDiff % (1000 * 60)) / 1000);
 
     return `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
   };
